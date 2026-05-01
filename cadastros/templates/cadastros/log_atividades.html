@@ -1,0 +1,208 @@
+{% extends "cadastros/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto text-white" 
+     x-data="{ openModal: false, modalContent: '' }">
+
+    <div id="topo-lista" class="mb-8">
+        <div>
+            <h1 class="text-4xl sm:text-3xl font-extrabold text-white border-b-4 border-primary pb-2 mb-2 w-fit">
+                <i class="fas fa-history text-primary mr-2"></i>
+                <span class="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                    Log de Atividades
+                </span>
+            </h1>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 mb-6">
+        
+        <div class="flex-1 bg-gradient-to-br from-gray-900/90 to-gray-800/90 rounded-3xl shadow-2xl p-6 border border-gray-700/60">
+            <div class="flex items-center gap-3 mb-4">
+                <div>
+                    <i class="fas fa-filter text-primary text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">Filtros de Pesquisa</h3>
+            </div>
+            
+            <form hx-get="{% url 'listar_log_atividades' %}" 
+                  hx-target="#tabela-logs-wrapper" 
+                  hx-swap="innerHTML" 
+                  hx-indicator="#loading-indicator"
+                  class="flex flex-col gap-4">
+                
+                <div class="flex flex-wrap gap-4">
+                    <div class="flex-1 min-w-[200px]">
+                        <label for="acao" class="block text-sm font-medium text-gray-300 mb-2">Tipo de Ação</label>
+                        <select id="acao" name="acao" class="bg-gray-800/90 border border-gray-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-primary focus:border-primary block w-full py-3 px-4 transition-all duration-200 shadow-md">
+                            <option value="">Todas as Ações</option>
+                            <option value="CRIAÇÃO" {% if acao_filter == 'CRIAÇÃO' %}selected{% endif %}>Criação</option>
+                            <option value="ATUALIZAÇÃO" {% if acao_filter == 'ATUALIZAÇÃO' %}selected{% endif %}>Atualização</option>
+                            <option value="EXCLUSÃO" {% if acao_filter == 'EXCLUSÃO' %}selected{% endif %}>Exclusão</option>
+                            
+                            <option value="LOGIN" {% if acao_filter == 'LOGIN' %}selected{% endif %}>Login</option>
+                            <option value="LOGOUT" {% if acao_filter == 'LOGOUT' %}selected{% endif %}>Logout</option>
+                        </select>
+                    </div>
+
+                    <div class="flex-1 min-w-[200px]">
+                        <label for="usuario" class="block text-sm font-medium text-gray-300 mb-2">Funcionário</label>
+                        <input type="text" id="usuario" name="usuario" value="{{ usuario_filter|default_if_none:'' }}"
+                               class="bg-gray-800/90 border border-gray-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-primary focus:border-primary block w-full py-3 px-4 placeholder-gray-500 transition-all duration-200 shadow-md"
+                               placeholder="Nome ou usuário">
+                    </div>
+                </div>
+
+                <div class="w-full flex justify-center gap-2">
+                    <button type="submit" class="bg-primary hover:bg-opacity-85 text-white font-bold py-3 px-6 rounded-xl transition duration-200 shadow-lg shadow-primary/30 transform hover:scale-[1.02]">
+                        <i class="fas fa-search mr-2"></i> Aplicar Filtro
+                    </button>
+                    
+                    {% if acao_filter or usuario_filter %}
+                        <a href="{% url 'listar_log_atividades' %}" 
+                           hx-get="{% url 'listar_log_atividades' %}" 
+                           hx-target="#tabela-logs-wrapper" 
+                           hx-swap="innerHTML"
+                           hx-indicator="#loading-indicator"
+                           class="bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-gray-300 font-semibold py-3 px-6 rounded-xl shadow-md transition-all duration-200 flex items-center gap-2 transform hover:scale-[1.05]">
+                            <i class="fas fa-times"></i> Limpar
+                        </a>
+                    {% endif %}
+                    <span id="loading-indicator" class="htmx-indicator ml-4 flex items-center">
+                        <i class="fas fa-spinner fa-spin text-white"></i>
+                    </span>
+                </div>
+            </form>
+        </div>
+
+        <div class="flex-1 bg-gradient-to-br from-gray-900/90 to-gray-800/90 rounded-3xl shadow-2xl p-6 border border-gray-700/60">
+    
+            <div class="flex items-center gap-3 mb-5">
+                <div class="flex-shrink-0 p-3">
+                    <i class="fas fa-database text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Gerenciamento de Dados</h3>
+                    <p class="text-sm text-gray-400 mt-1">Exportar ou importar registros de log.</p>
+                </div>
+            </div>
+    
+            <div class="space-y-4">
+                <div>
+                    <a href="{% url 'exportar_logs_csv' %}?{{ filtros.urlencode }}" 
+                       class="w-full flex items-center justify-center gap-2 bg-primary text-white font-bold py-3 px-6 rounded-xl transition duration-200 transform hover:scale-[1.02]">
+                        <i class="fas fa-download"></i>
+                        <span>Exportar Log (CSV)</span>
+                    </a>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Baixa um arquivo .csv <strong>com os filtros aplicados</strong>.</p>
+                </div>
+                <div>
+                    <a href="{% url 'importar_logs_anexo' %}" 
+                       class="w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-md transform hover:scale-[1.02]">
+                        <i class="fas fa-upload"></i>
+                        <span>Importar Log</span>
+                    </a>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Fazer upload de um novo arquivo de log.</p>
+                </div>
+            </div>
+        </div>
+        
+    </div> <div id="tabela-logs-wrapper" class="htmx-fade-container">
+        {% include "cadastros/_tabela_logs.html" %}
+    </div>
+
+
+    <template x-teleport="body">
+        <div x-show="openModal" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center p-4" 
+             style="display: none;">
+            
+            <div @click="openModal = false" class="fixed inset-0 bg-black/70"></div>
+
+            <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-xl w-full max-w-2xl z-10 p-6 relative">
+                
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-white">Detalhes do Log</h3>
+                    <button @click="openModal = false" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <div class="max-h-[60vh] overflow-y-auto pr-2">
+                    <p x-text="modalContent" class="text-gray-300 text-base whitespace-pre-wrap break-words"></p>
+                </div>
+
+                <div class="mt-6 text-right">
+                    <button @click="openModal = false" 
+                            class="bg-primary hover:bg-opacity-85 text-white font-bold py-2 px-6 rounded-lg transition duration-200">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // --- FUNÇÃO DE ROLAGEM SUAVE ---
+    function rolarLentamente(elementoAlvo, duracao) {
+        const alvoPosicao = elementoAlvo.getBoundingClientRect().top + window.scrollY - 20;
+        const inicioPosicao = window.scrollY;
+        const distancia = alvoPosicao - inicioPosicao;
+        let tempoInicial = null;
+
+        function animacao(tempoAtual) {
+            if (tempoInicial === null) tempoInicial = tempoAtual;
+            const tempoDecorrido = tempoAtual - tempoInicial;
+            const t = tempoDecorrido / (duracao / 2);
+            let novaPosicao;
+            
+            if (t < 1) {
+                novaPosicao = distancia / 2 * t * t + inicioPosicao;
+            } else {
+                const t2 = t - 1;
+                novaPosicao = -distancia / 2 * (t2 * (t2 - 2) - 1) + inicioPosicao;
+            }
+
+            window.scrollTo(0, novaPosicao);
+
+            if (tempoDecorrido < duracao) {
+                requestAnimationFrame(animacao);
+            } else {
+                window.scrollTo(0, alvoPosicao); 
+            }
+        }
+        requestAnimationFrame(animacao);
+    }
+
+    // --- LISTENER DO HTMX ---
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // 2. VERIFIQUE O ID CORRETO DA TABELA ⬇️
+        if (evt.target.id === 'tabela-logs-wrapper') {
+            
+            const elementoDisparador = evt.detail.requestConfig.elt;
+            
+            // Apenas rola se NÃO for filtro de texto ou select
+            if (elementoDisparador && 
+                elementoDisparador.tagName !== 'INPUT' && 
+                elementoDisparador.tagName !== 'SELECT') {
+                
+                const topo = document.getElementById('topo-lista');
+                if (topo) {
+                    rolarLentamente(topo, 1000); // 1000ms = 1 segundo (mais suave)
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

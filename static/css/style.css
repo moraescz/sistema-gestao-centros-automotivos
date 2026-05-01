@@ -1,0 +1,176 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+:root {
+    --sidebar-bg: #212529;
+    --sidebar-active-bg: #343a40;
+    --active-blue: #0d6efd;
+    --sidebar-collapsed-width: 5rem;
+    --sidebar-expanded-width: 16rem;
+}
+
+.sidebar {
+    background-color: var(--sidebar-bg);
+    width: var(--sidebar-collapsed-width);
+    transition: width 0.3s ease-in-out;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+.sidebar:hover {
+    width: var(--sidebar-expanded-width);
+}
+
+.sidebar span, .sidebar h1 {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.sidebar:hover span, .sidebar:hover h1 {
+    opacity: 1;
+    transition-delay: 0.15s;
+}
+
+.sidebar-item a {
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease-in-out;
+    color: #adb5bd;
+    white-space: nowrap;
+}
+
+.sidebar-item a:hover {
+    background-color: var(--sidebar-active-bg);
+    color: #ffffff;
+}
+
+.sidebar-item.active a {
+    background-color: var(--sidebar-active-bg);
+    border-left-color: var(--active-blue);
+    color: var(--active-blue);
+}
+
+.logo-container {
+    width: var(--sidebar-expanded-width);
+}
+
+#main-content {
+    /* O Django irá substituir isso pelo caminho correto para a imagem */
+    background-image: url('../images/fundo site tcc.png');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#main-content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+}
+
+#main-content > * {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+}
+
+/* Estilos para o Model de Cadastro */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.form-container {
+    background-color: #424242;
+    color: white;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    width: 100%;
+    max-width: 450px; /* ~max-w-md */
+}
+
+.form-title {
+    font-size: 1.5rem; /* ~text-2xl */
+    font-weight: 600;  /* ~font-semibold */
+    text-align: center;
+    margin-bottom: 24px; /* ~mb-6 */
+}
+
+.form-group {
+    margin-bottom: 24px; /* ~mb-6 */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.875rem; /* ~text-sm */
+    color: #d1d5db; /* ~text-gray-300 */
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px;
+    background-color: #4b5563; /* ~bg-gray-600 */
+    border: 1px solid #6b7280; /* ~border-gray-500 */
+    border-radius: 6px;
+    color: white;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+.form-input:focus {
+    box-shadow: 0 0 0 2px #3b82f6; /* ~ring-2 focus:ring-blue-500 */
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px; /* ~gap-4 */
+    margin-top: 8px;
+}
+
+.btn {
+    padding: 8px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary {
+    background-color: #2563eb; /* ~bg-blue-600 */
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #1d4ed8; /* ~hover:bg-blue-700 */
+}
+
+.btn-secondary {
+    background-color: #e5e7eb; /* ~bg-gray-200 */
+    color: #1f2937; /* ~text-gray-800 */
+}
+.btn-secondary:hover {
+    background-color: #d1d5db; /* ~hover:bg-gray-300 */
+}

@@ -1,0 +1,436 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load l10n %}
+
+{% block content %}
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out forwards;
+    }
+    .animate-slide-up {
+        animation: slideUp 0.8s ease-out forwards;
+    }
+    /* Adicionando delays para os blocos */
+    .animate-delay-1 { animation-delay: 0.2s; }
+    .animate-delay-2 { animation-delay: 0.3s; }
+    .animate-delay-3 { animation-delay: 0.4s; }
+    .animate-delay-4 { animation-delay: 0.5s; }
+    .animate-delay-5 { animation-delay: 0.6s; }
+    .animate-delay-6 { animation-delay: 0.7s; }
+
+    /* Animação de rotação para o spinner (necessária) */
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="p-4 sm:p-8 max-w-7xl mx-auto text-white space-y-8">
+
+    <div class="flex flex-wrap justify-between items-center gap-6 pb-2 animate-fade-in">
+        <div>
+            <h1 class="text-4xl font-extrabold text-white border-b-4 border-primary pb-2 mb-2 w-fit flex items-center">
+                <i class="fas fa-file-invoice-dollar text-primary mr-3"></i> OS #{{ ordem.pk }}
+            </h1>
+            <p class="text-gray-400 mt-2 text-base">Aberta em: <strong class="text-gray-200">{{ ordem.data_abertura|date:"d/m/Y" }}</strong></p>
+        </div>
+        <div class="flex items-center gap-3 sm:gap-4">
+            {% if perms.cadastros.change_ordemservico and not ordem.finalizada %}
+                <a href="{% url 'editar_ordem_servico' ordem.pk %}"
+                   class="inline-flex items-center gap-2 bg-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/30
+                          transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:brightness-110"
+                   title="Editar Ordem de Serviço">
+                    <i class="fas fa-edit w-5 h-5"></i>
+                    <span class="hidden sm:inline">Editar OS</span>
+                </a>
+            {% endif %}
+
+            <a href="{% url 'gerar_os_pdf' ordem.pk %}" target="_blank"
+               id="btn-gerar-pdf"
+               class="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-green-900/50 
+                      transform transition-all duration-300 hover:scale-105 hover:shadow-xl disabled:opacity-75 disabled:cursor-wait"
+               title="Gerar PDF">
+                <svg id="pdf-spinner" class="w-5 h-5 spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <i id="pdf-icon" class="fas fa-file-pdf"></i>
+                <span id="pdf-text" class="hidden sm:inline">Gerar PDF</span>
+            </a>
+
+            <a href="{% url 'listar_ordens_servico' %}" 
+               class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg
+                      transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                <i class="fas fa-arrow-left w-5 h-5"></i>
+                <span class="hidden sm:inline">Voltar</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="lg:col-span-1 space-y-6">
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 animate-slide-up animate-delay-1">
+                <h3 class="text-xl font-bold text-white pb-3 mb-4 border-b-2 border-gray-700 flex items-center gap-3">
+                    <i class="fas fa-user-circle text-primary"></i>
+                    <span>Dados do Cliente</span>
+                </h3>
+                <div class="space-y-3 text-gray-400 text-base">
+                    <p><strong>Nome:</strong> <span class="text-white">{{ ordem.veiculo.cliente.nome }}</span></p>
+                    <p><strong>Email:</strong> <span class="text-white">{{ ordem.veiculo.cliente.email|default:'Não informado' }}</span></p>
+                    {% if ordem.veiculo.cliente.telefone %}
+                        <p><strong>Telefone:</strong> <span class="text-white">{{ ordem.veiculo.cliente.telefone }}</span></p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 animate-slide-up animate-delay-2">
+                <h3 class="text-xl font-bold text-white pb-3 mb-4 border-b-2 border-gray-700 flex items-center gap-3">
+                    <i class="fas fa-car-side text-primary"></i>
+                    <span>Dados do Veículo</span>
+                </h3>
+                <div class="space-y-3 text-gray-400 text-base">
+                    <p><strong>Modelo:</strong> <span class="text-white">{{ ordem.veiculo.modelo }}</span></p>
+                    <p><strong>Placa:</strong> <span class="text-yellow-400 font-mono text-xl tracking-wider">{{ ordem.veiculo.placa }}</span></p>
+                    <p><strong>Cor:</strong> <span class="text-white">{{ ordem.veiculo.cor|default:'N/A' }}</span></p>
+                    <p><strong>KM de Entrada:</strong> <span class="text-white">{{ ordem.quilometragem|default:'N/A' }} km</span></p>
+                    <p><strong>Combustível:</strong> <span class="text-white">{{ ordem.get_nivel_combustivel_display|default:'N/A' }}</span></p>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 animate-slide-up animate-delay-3">
+                 <h3 class="text-lg font-bold text-gray-300 pb-3 mb-4 border-b border-gray-700">Checklist de Itens</h3>
+                 <div class="text-sm space-y-1">
+                       <div class="flex justify-between items-center py-2 text-gray-300 border-b border-gray-700 last:border-b-0 text-sm">
+                           <span>Óleo do Motor:</span>
+                           <span class="{% if ordem.oleo_motor == 'BOM' %}text-emerald-400 font-bold{% elif ordem.oleo_motor == 'REVISAR' %}text-amber-400 font-bold{% elif ordem.oleo_motor == 'RUIM' %}text-red-400 font-bold{% else %}text-gray-500 italic{% endif %}">{{ ordem.get_oleo_motor_display|default:"N/A" }}</span>
+                       </div>
+                       <div class="flex justify-between items-center py-2 text-gray-300 border-b border-gray-700 last:border-b-0 text-sm">
+                           <span>Alinhamento:</span>
+                           <span class="{% if ordem.alinhamento == 'BOM' %}text-emerald-400 font-bold{% elif ordem.alinhamento == 'REVISAR' %}text-amber-400 font-bold{% elif ordem.alinhamento == 'RUIM' %}text-red-400 font-bold{% else %}text-gray-500 italic{% endif %}">{{ ordem.get_alinhamento_display|default:"N/A" }}</span>
+                       </div>
+                       <div class="flex justify-between items-center py-2 text-gray-300 border-b border-gray-700 last:border-b-0 text-sm">
+                           <span>Bateria:</span>
+                           <span class="{% if ordem.bateria == 'BOM' %}text-emerald-400 font-bold{% elif ordem.bateria == 'REVISAR' %}text-amber-400 font-bold{% elif ordem.bateria == 'RUIM' %}text-red-400 font-bold{% else %}text-gray-500 italic{% endif %}">{{ ordem.get_bateria_display|default:"N/A" }}</span>
+                       </div>
+                       <div class="flex justify-between items-center py-2 text-gray-300 border-b border-gray-700 last:border-b-0 text-sm">
+                           <span>Palheta Dianteira:</span>
+                           <span class="{% if ordem.palheta_dianteira == 'BOM' %}text-emerald-400 font-bold{% elif ordem.palheta_dianteira == 'REVISAR' %}text-amber-400 font-bold{% elif ordem.palheta_dianteira == 'RUIM' %}text-red-400 font-bold{% else %}text-gray-500 italic{% endif %}">{{ ordem.get_palheta_dianteira_display|default:"N/A" }}</span>
+                       </div>
+                       <div class="flex justify-between items-center py-2 text-gray-300 border-b border-gray-700 last:border-b-0 text-sm">
+                           <span>Palheta Traseira:</span>
+                           <span class="{% if ordem.palheta_traseira == 'BOM' %}text-emerald-400 font-bold{% elif ordem.palheta_traseira == 'REVISAR' %}text-amber-400 font-bold{% elif ordem.palheta_traseira == 'RUIM' %}text-red-400 font-bold{% else %}text-gray-500 italic{% endif %}">{{ ordem.get_palheta_traseira_display|default:"N/A" }}</span>
+                       </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 animate-slide-up animate-delay-4">
+                <h3 class="text-lg font-bold text-gray-300 pb-3 mb-4 border-b border-gray-700">Checklist de Luzes</h3>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    {% for field_name, field_label in ordem.get_luzes_fields.items %}
+                        <div class="flex justify-between items-center py-1 text-gray-300 border-b border-gray-700 last:border-b-0 text-sm">
+                            <span class="text-gray-400">{{ field_label }}:</span>
+                            {% if field_name in ordem.get_luzes_ok %}
+                                <span class="text-emerald-400 font-bold inline-flex items-center"><i class="fas fa-check-circle mr-1"></i> OK</span>
+                            {% else %}
+                                <span class="text-red-400 font-bold inline-flex items-center"><i class="fas fa-times-circle mr-1"></i> Falha</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 animate-slide-up animate-delay-1">
+                <h3 class="text-xl font-bold text-white pb-3 mb-4 border-b-2 border-gray-700 flex items-center gap-3">
+                    <i class="fas fa-tasks text-primary"></i> Status da OS
+                </h3>
+                {% if ordem.finalizada %}
+                   {% if ordem.status_aprovacao == 'REPROVADO' %}
+                       <p class="text-gray-300">Serviço <strong class="text-red-400">Reprovado</strong>.</p>
+                   {% else %}
+                       <p class="text-gray-300">Serviço <strong class="text-teal-400">Finalizado</strong>.</p>
+                   {% endif %}
+                   {% if ordem.data_conclusao %}
+                       <p class="text-sm text-gray-400 mt-2">Data de Conclusão: <strong class="text-gray-200">{{ ordem.data_conclusao|date:"d/m/Y" }}</strong></p>
+                   {% endif %}
+                   <div class="mt-4">
+                       <p class="text-sm text-gray-400">Status de Aprovação:
+                           <strong class="
+                             {% if ordem.status_aprovacao == 'AGUARDANDO' %}text-yellow-400
+                             {% elif ordem.status_aprovacao == 'APROVADO' %}text-blue-400
+                             {% elif ordem.status_aprovacao == 'REPROVADO' %}text-red-400
+                             {% elif ordem.status_aprovacao == 'FINALIZADO' %}text-green-400
+                             {% endif %}">
+                             {{ ordem.get_status_aprovacao_display }}
+                           </strong>
+                       </p>
+                   </div>
+                   {% if perms.cadastros.change_ordemservico %}
+                       <form method="post" action="{% url 'finalizar_ordem_servico' ordem.pk %}" class="mt-4">
+                           {% csrf_token %}
+                           <button type="submit" class="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200">
+                               Reabrir OS
+                           </button>
+                       </form>
+                   {% endif %}
+                {% else %}
+                   {% if ordem.status_aprovacao == 'APROVADO' %}
+                       <p class="text-gray-300">Serviço <strong class="text-blue-400">Aprovado Pelo Cliente</strong>.</p>
+                   {% elif ordem.status_aprovacao == 'REPROVADO' %}
+                       <p class="text-gray-300">Serviço <strong class="text-red-400">Reprovado</strong>.</p>
+                   {% else %}
+                       <p class="text-gray-300">Serviço <strong class="text-amber-400">Em Andamento</strong>.</p>
+                   {% endif %}
+                   <div class="mt-4">
+                       <p class="text-sm text-gray-400">Status de Aprovação:
+                           <strong class="
+                             {% if ordem.status_aprovacao == 'AGUARDANDO' %}text-yellow-400
+                             {% elif ordem.status_aprovacao == 'APROVADO' %}text-blue-400
+                             {% elif ordem.status_aprovacao == 'REPROVADO' %}text-red-400
+                             {% elif ordem.status_aprovacao == 'FINALIZADO' %}text-green-400
+                             {% endif %}">
+                             {{ ordem.get_status_aprovacao_display }}
+                           </strong>
+                       </p>
+                   </div>
+                   {% if perms.cadastros.change_ordemservico %}
+                       {% if ordem.status_aprovacao == 'FINALIZADO' or ordem.status_aprovacao == 'REPROVADO' %}
+                           <form method="post" action="{% url 'alterar_status_aprovacao' ordem.pk %}" class="mt-4">
+                               {% csrf_token %}
+                               <input type="hidden" name="status_aprovacao" value="AGUARDANDO">
+                               <button type="submit" class="inline-flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200">
+                                   Reabrir OS
+                               </button>
+                           </form>
+                       {% else %}
+                           <div class="mt-4">
+                               <form method="post" action="{% url 'alterar_status_aprovacao' ordem.pk %}" class="flex items-center gap-3">
+                                   {% csrf_token %}
+                                   <label for="status_aprovacao" class="block text-sm font-medium text-gray-300 whitespace-nowrap">Alterar Status:</label>
+                                   <select name="status_aprovacao" id="status_aprovacao" class="bg-gray-900 border border-gray-700 rounded-xl p-2 text-white focus:ring-primary focus:border-primary text-sm">
+                                       <option value="AGUARDANDO" {% if ordem.status_aprovacao == 'AGUARDANDO' %}selected{% endif %}>Aguardando</option>
+                                       <option value="APROVADO" {% if ordem.status_aprovacao == 'APROVADO' %}selected{% endif %}>Aprovado</option>
+                                       <option value="REPROVADO" {% if ordem.status_aprovacao == 'REPROVADO' %}selected{% endif %}>Reprovado</option>
+                                       <option value="FINALIZADO" {% if ordem.status_aprovacao == 'FINALIZADO' %}selected{% endif %}>Finalizado</option>
+                                   </select>
+                                   <button type="submit" class="bg-primary text-white font-medium py-2 px-4 rounded-xl shadow-lg shadow-primary/30 transform hover:scale-105 transition-all duration-200 text-sm">
+                                       Alterar
+                                   </button>
+                               </form>
+                           </div>
+                       {% endif %}
+                   {% endif %}
+                {% endif %}
+            </div>
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 animate-slide-up animate-delay-2">
+                <div class="flex items-center justify-between pb-3 mb-4 border-b-2 border-gray-700">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                        <i class="fas fa-clipboard-list text-primary"></i> Descrição do Serviço
+                    </h3>
+                </div>
+                <div class="whitespace-pre-wrap text-gray-200 text-base prose prose-invert max-w-none">
+                    {{ ordem.descricao|default:"Nenhuma descrição foi informada."|linebreaks }}
+                </div>
+                {% if ordem.data_conclusao and ordem.finalizada %}
+                    <p class="text-base text-gray-400 mt-4 pt-4 border-t border-gray-700">
+                        Concluída em: <strong class="text-white">{{ ordem.data_conclusao|date:"d/m/Y" }}</strong>
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 animate-slide-up animate-delay-3">
+                <h3 class="text-xl font-bold text-white pb-3 mb-4 border-b-2 border-gray-700 flex items-center gap-3">
+                    <i class="fas fa-exclamation-triangle text-primary"></i>
+                    <span>Observações e Avarias</span>
+                </h3>
+                <div class="whitespace-pre-wrap text-gray-200 text-base prose prose-invert max-w-none">
+                    {{ ordem.observacoes_avarias|default:"Nenhuma avaria ou observação informada."|linebreaks }}
+                </div>
+            </div>
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden animate-slide-up animate-delay-4">
+                <div class="p-6 md:p-8 border-b-2 border-gray-700">
+                    <div class="flex flex-wrap justify-between items-center gap-4">
+                        <h2 class="text-2xl font-bold text-white"><i class="fas fa-tools mr-2 text-primary"></i> Peças e Serviços</h2>
+                        <div class="flex gap-3">
+                            {% if perms.cadastros.add_pecautilizada and not ordem.finalizada %}
+                                <a href="{% url 'adicionar_peca_na_os' ordem.pk %}" class="inline-flex items-center gap-2 bg-primary text-white font-bold py-2 px-4 rounded-xl shadow-lg shadow-primary/30 transform hover:scale-105 transition-all duration-200">
+                                    <i class="fas fa-plus mr-1"></i> Peça
+                                </a>
+                            {% endif %}
+                            {% if perms.cadastros.add_servicoordemservico and not ordem.finalizada %}
+                                <a href="{% url 'adicionar_servico_na_os' ordem.pk %}" class="inline-flex items-center gap-2 bg-primary text-white font-bold py-2 px-4 rounded-xl shadow-lg shadow-primary/30 transform hover:scale-105 transition-all duration-200">
+                                    <i class="fas fa-plus mr-1"></i> Serviço
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-300 border-collapse">
+                        <thead class="text-xs text-gray-200 uppercase tracking-wider border-b-2 border-gray-600 bg-gradient-to-r from-gray-700/60 to-gray-800/60">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Item</th>
+                                <th scope="col" class="px-6 py-3 text-center">Qtd.</th>
+                                <th scope="col" class="px-6 py-3 text-right">Valor Unitário</th>
+                                <th scope="col" class="px-6 py-3 text-right">Subtotal</th>
+                                <th scope="col" class="px-6 py-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in pecas_utilizadas %}
+                            <tr class="bg-gray-900/50 transition-all duration-300 hover:bg-gray-700/60 hover:shadow-lg border-b border-gray-700/50 group">
+                                <td class="px-6 py-2 font-semibold text-white">{{ item.peca.nome }} <span class="text-gray-500 text-xs">(Peça)</span></td>
+                                <td class="px-6 py-2 text-center">{{ item.quantidade_utilizada }}</td>
+                                <td class="px-6 py-2 text-right">R$ {{ item.peca.valor_unitario|floatformat:2|localize }}</td>
+                                <td class="px-6 py-2 text-right font-extrabold text-white">R$ {{ item.subtotal|floatformat:2|localize }}</td>
+                                <td class="px-6 py-2">
+                                    <div class="flex justify-end items-center opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                        {% if perms.cadastros.delete_pecautilizada and not ordem.finalizada %}
+                                            <a href="{% url 'remover_peca_da_os' item.pk %}" class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-200 transform hover:scale-110" title="Remover Peça">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% for servico in ordem.servicos_utilizados.all %}
+                            <tr class="bg-gray-900/50 transition-all duration-300 hover:bg-gray-700/60 hover:shadow-lg border-b border-gray-700/50 group">
+                                <td class="px-6 py-2 font-semibold text-white">{{ servico.descricao }} <span class="text-gray-500 text-xs">(Serviço)</span></td>
+                                <td class="px-6 py-2 text-center">{{ servico.quantidade|default:1 }}</td>
+                                <td class="px-6 py-2 text-right">R$ {{ servico.valor_unitario|floatformat:2|localize }}</td>
+                                <td class="px-6 py-2 text-right font-extrabold text-white">R$ {{ servico.valor|floatformat:2|localize }}</td>
+                                <td class="px-6 py-2">
+                                    <div class="flex justify-end items-center opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                        {% if perms.cadastros.delete_servicoordemservico and not ordem.finalizada %}
+                                            <a href="{% url 'remover_servico_da_os' servico.pk %}" class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-200 transform hover:scale-110" title="Remover Serviço">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not pecas_utilizadas and not ordem.servicos_utilizados.all %}
+                            <tr class="bg-gray-900/50 border-b border-gray-700/50">
+                                <td colspan="5" class="text-center py-8 text-gray-500">Nenhuma peça ou serviço adicionado.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                        <tfoot class="border-t-4 border-primary">
+                            <tr class="bg-gradient-to-r from-gray-700/60 to-gray-800/60 font-bold text-white">
+                                <td colspan="3" class="px-6 py-3 text-right uppercase tracking-wider text-xl text-white font-extrabold align-middle">
+                                    Valor Total
+                                </td>
+                                <td class="px-6 py-3 text-right align-middle">
+                                    <span class="text-2xl text-white font-black">R$ {{ ordem.get_valor_total_real|floatformat:2|localize }}</span>
+                                </td>
+                                <td class="align-middle"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden animate-slide-up animate-delay-5">
+                <div class="p-6 md:p-8 border-b-2 border-gray-700">
+                    <div class="flex flex-wrap justify-between items-center gap-4">
+                        <h2 class="text-2xl font-bold text-white"><i class="fas fa-paperclip mr-2 text-primary"></i> Anexos</h2>
+                        {% if perms.cadastros.add_anexoordemservico and not ordem.finalizada %}
+                            <a href="{% url 'adicionar_anexo_na_os' ordem.pk %}" class="inline-flex items-center gap-2 bg-primary text-white font-bold py-2 px-4 rounded-xl shadow-lg shadow-primary/30 transform hover:scale-105 transition-all duration-200">
+                                <i class="fas fa-plus mr-1"></i> Anexo
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-300 border-collapse">
+                        <thead class="text-xs text-gray-200 uppercase tracking-wider border-b-2 border-gray-600 bg-gradient-to-r from-gray-700/60 to-gray-800/60">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Arquivo</th>
+                                <th scope="col" class="px-6 py-3">Descrição</th>
+                                <th scope="col" class="px-6 py-3">Data de Upload</th>
+                                <th scope="col" class="px-6 py-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for anexo in ordem.anexos.all %}
+                            <tr class="bg-gray-900/50 transition-all duration-300 hover:bg-gray-700/60 hover:shadow-lg border-b border-gray-700/50 group">
+                                <td class="px-6 py-2 font-semibold">
+                                    <a href="{{ anexo.arquivo.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 underline">
+                                        {{ anexo.arquivo.name|truncatechars:30 }}
+                                    </a>
+                                </td>
+                                <td class="px-6 py-2 text-gray-400">{{ anexo.descricao|default:"Sem descrição" }}</td>
+                                <td class="px-6 py-2 text-gray-400">{{ anexo.data_upload|date:"d/m/Y H:i" }}</td>
+                                <td class="px-6 py-2">
+                                    <div class="flex justify-end items-center opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                        {% if perms.cadastros.delete_anexoordemservico and not ordem.finalizada %}
+                                            <a href="{% url 'remover_anexo_da_os' anexo.pk %}" class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-200 transform hover:scale-110" title="Remover Anexo">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr class="bg-gray-900/50 border-b border-gray-700/50">
+                                <td colspan="4" class="text-center py-8 text-gray-500">Nenhum anexo adicionado.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- LÓGICA DO BOTÃO GERAR PDF ---
+        const btnPdf = document.getElementById('btn-gerar-pdf');
+        const pdfIcon = document.getElementById('pdf-icon');
+        const pdfSpinner = document.getElementById('pdf-spinner');
+        const pdfText = document.getElementById('pdf-text');
+
+        if (btnPdf && pdfIcon && pdfSpinner) {
+            btnPdf.addEventListener('click', function() {
+                // Ativa o estado de carregamento
+                pdfIcon.classList.add('hidden');
+                pdfSpinner.classList.remove('hidden');
+                if (pdfText) pdfText.textContent = 'Gerando...';
+                btnPdf.setAttribute('disabled', 'true');
+
+                // Reverte o botão após 3 segundos, já que o PDF abre em nova aba.
+                setTimeout(() => {
+                    pdfIcon.classList.remove('hidden');
+                    pdfSpinner.classList.add('hidden');
+                    if (pdfText) pdfText.textContent = 'Gerar PDF';
+                    btnPdf.removeAttribute('disabled');
+                }, 3000);
+            });
+        }
+    });
+</script>
+
+{% endblock %}

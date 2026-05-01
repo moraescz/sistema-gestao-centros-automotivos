@@ -1,0 +1,195 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto text-white space-y-6">
+
+    <!-- Header com título e botão -->
+    <div id="topo-lista" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div class="animate-fade-in">
+            <h1 class="text-3xl sm:text-1xl font-extrabold text-white border-b-4 border-primary pb-2 mb-2">
+                <i class="fas fa-clipboard-list text-primary mr-2"></i>Ordens de Serviço
+            </h1>
+        </div>
+        {% if perms.cadastros.add_ordemservico %}
+            <a href="{% url 'cadastrar_ordem_servico' %}"
+            class="w-full sm:w-auto bg-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/30
+                    transform transition-all duration-300 
+                    hover:scale-105 hover:shadow-xl hover:brightness-110">
+                <i class="fas fa-plus mr-2"></i> Nova OS
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 mb-6 animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-white flex items-center">
+                <i class="fas fa-filter text-primary mr-2"></i>Filtros e Pesquisa
+            </h3>
+            <button id="toggle-filters" class="text-gray-400 hover:text-white transition-colors duration-200 md:hidden">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+
+        <div id="filters-content" class="flex flex-col md:flex-row md:items-end gap-4">
+            
+            <div class="relative flex-1 w-full">
+                <label for="q" class="sr-only">Buscar</label> <form method="get" action="{% url 'listar_ordens_servico' %}" class="relative" hx-get="{% url 'listar_ordens_servico' %}" hx-target="#tabela-ordens-servico" hx-trigger="submit, keyup delay:50ms changed from:input[name=q]">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" name="q" id="q" value="{{ search_query|default:'' }}"
+                           class="block w-full bg-gray-900/80 border border-gray-600 rounded-xl py-3 pl-12 pr-12 leading-5 placeholder-gray-500 text-white focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 shadow-lg"
+                           placeholder="Buscar por cliente, placa ou ID da OS...">
+                    <button type="submit" class="hidden"></button>
+                    {% if search_query %}
+                    <a href="{% url 'listar_ordens_servico' %}" class="absolute inset-y-0 right-4 top-0 bottom-0 flex items-center text-gray-400 hover:text-red-400 transition-colors" title="Limpar pesquisa">
+                        <i class="fas fa-times-circle"></i>
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <form method="get" action="{% url 'listar_ordens_servico' %}" class="w-full md:w-auto flex flex-col md:flex-row gap-4" hx-get="{% url 'listar_ordens_servico' %}" hx-target="#tabela-ordens-servico" hx-trigger="submit, change">
+                
+                <div class="w-full md:w-auto">
+                    <label for="status" class="block text-sm font-medium text-gray-300 mb-2 flex items-center">
+                        <i class="fas fa-tasks text-primary mr-2"></i>Status
+                    </label>
+                    <select name="status" id="status"
+                            class="block w-full bg-gray-900/80 border border-gray-600 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300">
+                        <option value="">Todos os status</option>
+                        <option value="AGUARDANDO" {% if status_filter == 'AGUARDANDO' %}selected{% endif %}>Aguardando</option>
+                        <option value="APROVADO" {% if status_filter == 'APROVADO' %}selected{% endif %}>Aprovado</option>
+                        <option value="REPROVADO" {% if status_filter == 'REPROVADO' %}selected{% endif %}>Reprovado</option>
+                        <option value="FINALIZADO" {% if status_filter == 'FINALIZADO' %}selected{% endif %}>Finalizado</option>
+                    </select>
+                </div>
+            </form>
+
+            {% if status_filter or data_inicio %}
+            <div class="flex items-end">
+                <a href="{% url 'listar_ordens_servico' %}"
+                   class="w-full md:w-auto bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg transform hover:scale-105 flex items-center justify-center">
+                    <i class="fas fa-eraser mr-2"></i> Limpar
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Container da tabela -->
+    <div id="tabela-ordens-servico" class="htmx-fade-container animate-slide-up-delayed">
+        {% include 'cadastros/_tabela_ordens_servico.html' %}
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-up {
+    animation: slideUp 0.8s ease-out;
+}
+
+.animate-slide-up-delayed {
+    animation: slideUp 1s ease-out;
+}
+
+/* Toggle filtros mobile */
+#filters-content {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+#filters-content.collapsed {
+    max-height: 0;
+}
+
+@media (max-width: 768px) {
+    #filters-content:not(.collapsed) {
+        max-height: 1000px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggle-filters');
+    const filtersContent = document.getElementById('filters-content');
+
+    if (toggleBtn && filtersContent) {
+        toggleBtn.addEventListener('click', function() {
+            filtersContent.classList.toggle('collapsed');
+            const icon = toggleBtn.querySelector('i');
+            icon.classList.toggle('fa-chevron-down');
+            icon.classList.toggle('fa-chevron-up');
+        });
+    }
+});
+
+// --- FUNÇÃO DE ROLAGEM SUAVE ---
+function rolarLentamente(elementoAlvo, duracao) {
+        const alvoPosicao = elementoAlvo.getBoundingClientRect().top + window.scrollY - 20;
+        const inicioPosicao = window.scrollY;
+        const distancia = alvoPosicao - inicioPosicao;
+        let tempoInicial = null;
+
+        function animacao(tempoAtual) {
+            if (tempoInicial === null) tempoInicial = tempoAtual;
+            const tempoDecorrido = tempoAtual - tempoInicial;
+            const t = tempoDecorrido / (duracao / 2);
+            let novaPosicao;
+            
+            if (t < 1) {
+                novaPosicao = distancia / 2 * t * t + inicioPosicao;
+            } else {
+                const t2 = t - 1;
+                novaPosicao = -distancia / 2 * (t2 * (t2 - 2) - 1) + inicioPosicao;
+            }
+
+            window.scrollTo(0, novaPosicao);
+
+            if (tempoDecorrido < duracao) {
+                requestAnimationFrame(animacao);
+            } else {
+                window.scrollTo(0, alvoPosicao); 
+            }
+        }
+        requestAnimationFrame(animacao);
+    }
+
+    // --- LISTENER DO HTMX ---
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // 2. VERIFIQUE O ID CORRETO DA TABELA ⬇️
+        if (evt.target.id === 'tabela-ordens-servico') {
+            
+            const elementoDisparador = evt.detail.requestConfig.elt;
+            
+            // Apenas rola se NÃO for filtro de texto ou select
+            if (elementoDisparador && 
+                elementoDisparador.tagName !== 'INPUT' && 
+                elementoDisparador.tagName !== 'SELECT') {
+                
+                const topo = document.getElementById('topo-lista');
+                if (topo) {
+                    rolarLentamente(topo, 1000); // 1000ms = 1 segundo (mais suave)
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% if low_stock_count > 0 %}
+    {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'listar_pecas' %}
+
+<style>
+    /* As animações @keyframes (fade-in-down, pulse-glow, pulse-icon) permanecem as mesmas */
+    @keyframes fade-in-down {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 15px rgba(251, 191, 36, 0.3), 0 0 5px rgba(251, 191, 36, 0.2) inset; }
+        50% { box-shadow: 0 0 25px rgba(251, 191, 36, 0.5), 0 0 10px rgba(251, 191, 36, 0.3) inset; }
+    }
+    @keyframes pulse-icon {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    /* Classes de utilidade para as animações */
+    .animate-fade-in-down { animation: fade-in-down 0.5s ease-out forwards; }
+    .animate-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+    .animate-pulse-icon { animation: pulse-icon 2s ease-in-out infinite; }
+
+    /* --- CSS PARA O ALERTA INTEIRO (D'MISS) --- */
+    .stock-alert-container {
+        transition: opacity 0.3s ease-out,
+                    transform 0.3s ease-out,
+                    max-height 0.4s ease-in-out,
+                    padding-top 0.4s ease-in-out,
+                    padding-bottom 0.4s ease-in-out,
+                    margin-bottom 0.4s ease-in-out;
+        transform: translateY(0) scale(1);
+        max-height: 500px; /* Altura suficiente para a lista */
+        overflow: hidden;
+        opacity: 1;
+    }
+    .stock-alert-hidden {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    /* --- MUDANÇA: CSS PARA A LISTA RECOLHÍVEL (TOGGLE) --- */
+    .stock-list-details {
+        transition: max-height 0.4s ease-in-out, 
+                    opacity 0.3s ease-in-out,
+                    margin-top 0.4s ease-in-out;
+        max-height: 500px; /* Altura da lista */
+        opacity: 1;
+        overflow: hidden;
+        margin-top: 0.5rem; /* mt-2 */
+    }
+    
+    .stock-list-collapsed {
+        max-height: 0;
+        opacity: 0;
+        margin-top: 0;
+    }
+
+    /* Rotação do ícone do botão de toggle */
+    .stock-list-collapsed + .toggle-stock-button .toggle-stock-icon {
+        transform: rotate(-180deg);
+    }
+</style>
+
+    <div id="stock-alert" class="stock-alert-container relative bg-gray-800 bg-opacity-50 border border-yellow-500/50 text-yellow-200 p-4 rounded-lg mb-6 shadow-2xl flex items-start gap-4 animate-pulse-glow" role="alert">
+        
+        <div class="flex-shrink-0 w-8 h-8 text-yellow-400 animate-pulse-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        </div>
+
+        <div class="flex-grow">
+            <p class="font-bold text-yellow-300">Atenção: Estoque Baixo</p>
+            <p class="text-sm text-yellow-300/80">
+                Existem <strong>{{ low_stock_count }} peça(s)</strong> com quantidade igual ou abaixo do estoque mínimo.
+                <a href="{% url 'listar_pecas' %}" class="underline hover:text-yellow-100 font-semibold transition-colors duration-200">Verificar estoque agora</a>.
+            </p>
+
+            <div id="stock-list-details" class="stock-list-details">
+                {% if low_stock_pecas %}
+                <p class="text-sm text-yellow-300/80 mb-2">
+                    Peças com estoque baixo (ordenadas por quantidade atual):
+                </p>
+                
+                <div class="text-sm">
+                    <ul class="space-y-1">
+                        {% for peca in low_stock_pecas %}
+                        <li class="flex justify-between items-center">
+                            <span>{{ peca.nome }} - Quantidade: {{ peca.quantidade }} (Mínimo: {{ peca.quantidade_minima }})</span>
+                            
+                            <a href="{% url 'editar_peca' peca.pk %}"
+                                class="ml-2 inline-flex items-center px-2.5 py-1 border border-yellow-400/70 text-yellow-200 rounded-lg text-xs font-medium hover:bg-yellow-500/20 hover:text-yellow-100 hover:border-yellow-400 transition-all duration-200 transform hover:scale-105 shadow-sm">
+                                
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L15.232 5.232z" />
+                                </svg>
+                                Editar
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if low_stock_pecas %}
+            <button type="button" id="toggle-stock-details" class="toggle-stock-button mt-2 inline-flex items-center text-yellow-300/70 hover:text-yellow-200 text-xs font-semibold" aria-expanded="true">
+                <span class="toggle-text">Ocultar lista</span>
+                <svg class="toggle-stock-icon w-4 h-4 ml-1 transition-transform duration-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+            </button>
+            {% endif %}
+        </div>
+
+        <button type="button" id="dismiss-stock-alert" class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-yellow-400 hover:bg-yellow-500/20 hover:text-yellow-200 transition-all duration-200 cursor-pointer" title="Fechar notificação" aria-label="Fechar notificação">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        (function() {
+            // --- LÓGICA DO "DISMISS" (X) - ALTERADA PARA NÃO MEMORIZAR ---
+            const alertContainer = document.getElementById('stock-alert');
+            const dismissButton = document.getElementById('dismiss-stock-alert');
+    
+            if (alertContainer && dismissButton) {
+                // Sempre exibe com animação ao carregar a página
+                alertContainer.classList.add('animate-fade-in-down');
+    
+                dismissButton.addEventListener('click', function() {
+                    // Apenas oculta visualmente (sem salvar no localStorage)
+                    alertContainer.classList.add('stock-alert-hidden');
+                    setTimeout(() => { alertContainer.style.display = 'none'; }, 400);
+                });
+            }
+    
+            // --- LÓGICA DO "ABRIR/FECHAR" LISTA (TOGGLE) - MANTIDA ---
+            const toggleButton = document.getElementById('toggle-stock-details');
+            const listContainer = document.getElementById('stock-list-details');
+            
+            if (toggleButton && listContainer) {
+                const buttonText = toggleButton.querySelector('.toggle-text');
+                const listStorageKey = 'stock_list_collapsed'; // Mantemos a memória apenas para a lista (opcional)
+    
+                // Verifica se o usuário prefere a lista fechada (opcional, pode remover se quiser resetar a lista também)
+                if (localStorage.getItem(listStorageKey) === 'true') {
+                    listContainer.classList.add('stock-list-collapsed');
+                    buttonText.textContent = 'Mostrar lista';
+                    toggleButton.setAttribute('aria-expanded', 'false');
+                }
+    
+                toggleButton.addEventListener('click', function() {
+                    listContainer.classList.toggle('stock-list-collapsed');
+    
+                    if (listContainer.classList.contains('stock-list-collapsed')) {
+                        buttonText.textContent = 'Mostrar lista';
+                        toggleButton.setAttribute('aria-expanded', 'false');
+                        localStorage.setItem(listStorageKey, 'true');
+                    } else {
+                        buttonText.textContent = 'Ocultar lista';
+                        toggleButton.setAttribute('aria-expanded', 'true');
+                        localStorage.setItem(listStorageKey, 'false');
+                    }
+                });
+            }
+            
+        })();
+    </script>
+
+    {% endif %}
+{% endif %}

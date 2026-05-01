@@ -1,0 +1,170 @@
+{% load static %}
+{% load l10n %}
+
+<div id="tabela-funcionarios-inativos" class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden htmx-fade-container">
+
+    {% if page_obj %}
+        <div class="hidden md:block overflow-x-auto">
+            <table class="min-w-full text-left border-collapse">
+                
+                <thead class="text-sm uppercase text-red-300 tracking-wider border-b-2 border-red-700 bg-gradient-to-r from-red-900/60 to-red-950/60">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-semibold text-left">
+                            <i class="fas fa-user-slash text-red-400 mr-2"></i>Funcionário / Email
+                        </th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-center">
+                            <i class="fas fa-id-badge text-red-400 mr-2"></i>Usuário
+                        </th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-center">
+                            <i class="fas fa-cogs text-red-400 mr-2"></i>Ações
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for funcionario in page_obj %}
+                    <tr class="bg-gray-900/50 transition-all duration-300 hover:bg-red-900/40 hover:shadow-lg border-b border-gray-700/50 group">
+                        
+                        <td class="px-6 py-4 font-bold text-sm">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-red-900/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user-slash text-red-400 text-lg"></i>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400 font-semibold whitespace-nowrap">
+                                        {{ funcionario.get_full_name|default:"Não informado" }}
+                                    </span>
+                                    <p class="text-gray-500 text-xs">{{ funcionario.email|default:"Não informado" }}</p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-4 py-2 text-xs font-bold leading-tight rounded-full shadow-lg
+                                          bg-gradient-to-r from-red-600 to-red-700 text-red-100 opacity-80">
+                                {{ funcionario.username }}
+                            </span>
+                        </td>
+
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center space-x-2 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                
+                                <a href="{% url 'reativar_funcionario' pk=funcionario.pk %}"
+                                   data-hx-boost="false"
+                                   class="p-2 text-gray-400 hover:text-green-400 hover:bg-green-500/20 rounded-lg transition-all duration-200 transform hover:scale-110"
+                                   title="Reativar Funcionário">
+                                    <i class="fas fa-user-check"></i>
+                                </a>
+                                </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="md:hidden space-y-4 p-4">
+            {% for funcionario in page_obj %}
+            <div class="bg-gray-900/50 rounded-xl p-4 border border-gray-700/50 hover:border-red-500/50 transition-all duration-300 hover:shadow-lg">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-red-900/20 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user-slash text-red-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-gray-400 font-semibold">{{ funcionario.get_full_name|default:"-" }}</h3>
+                            <p class="text-gray-500 text-sm">{{ funcionario.email|default:"-" }}</p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 text-xs font-bold leading-tight rounded-full
+                                  bg-red-600 text-red-100 opacity-80 whitespace-nowrap">
+                        {{ funcionario.username }}
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2">
+                    
+                    <a href="{% url 'reativar_funcionario' pk=funcionario.pk %}"
+                       data-hx-boost="false"
+                       class="p-2 text-gray-400 hover:text-green-400 hover:bg-green-500/20 rounded-lg transition-all duration-200">
+                        <i class="fas fa-user-check"></i>
+                    </a>
+                    </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="p-4 pt-6 pb-4 flex flex-col sm:flex-row items-center justify-between text-sm border-t border-gray-700 gap-4">
+            <span class="text-gray-400 whitespace-nowrap">
+                Página <strong class="text-white">{{ page_obj.number }}</strong> de <strong class="text-white">{{ page_obj.paginator.num_pages }}</strong>
+            </span>
+            
+            <div class="flex items-center gap-2 flex-wrap justify-center">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       hx-get="{% url 'listar_funcionarios_inativos' %}?page=1{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       hx-target="#tabela-funcionarios-inativos" hx-swap="innerHTML" 
+                       class="inline-flex items-center gap-2 bg-primary text-white hover:bg-opacity-80 font-bold py-2.5 px-4 rounded-xl transition-colors duration-200 text-xs sm:text-sm whitespace-nowrap">
+                        <i class="fas fa-angle-double-left text-xs"></i><span class="hidden sm:inline">Primeira</span>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 bg-gray-700 text-gray-500 border border-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm whitespace-nowrap cursor-not-allowed">
+                        <i class="fas fa-angle-double-left text-xs"></i><span class="hidden sm:inline">Primeira</span>
+                    </span>
+                {% endif %}
+
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       hx-get="{% url 'listar_funcionarios_inativos' %}?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       hx-target="#tabela-funcionarios-inativos" hx-swap="innerHTML" 
+                       class="inline-flex items-center gap-2 bg-primary text-white hover:bg-opacity-80 font-bold py-2.5 px-4 rounded-xl transition-colors duration-200 text-xs sm:text-sm whitespace-nowrap">
+                        <i class="fas fa-angle-left text-xs"></i><span class="hidden sm:inline">Anterior</span>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 bg-gray-700 text-gray-500 border border-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm whitespace-nowrap cursor-not-allowed">
+                        <i class="fas fa-angle-left text-xs"></i><span class="hidden sm:inline">Anterior</span>
+                    </span>
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       hx-get="{% url 'listar_funcionarios_inativos' %}?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       hx-target="#tabela-funcionarios-inativos" hx-swap="innerHTML" 
+                       class="inline-flex items-center gap-2 bg-primary text-white hover:bg-opacity-80 font-bold py-2.5 px-4 rounded-xl transition-colors duration-200 text-xs sm:text-sm whitespace-nowrap">
+                        <span class="hidden sm:inline">Próxima</span><i class="fas fa-angle-right text-xs"></i>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 bg-gray-700 text-gray-500 border border-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm whitespace-nowrap cursor-not-allowed">
+                        <span class="hidden sm:inline">Próxima</span><i class="fas fa-angle-right text-xs"></i>
+                    </span>
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       hx-get="{% url 'listar_funcionarios_inativos' %}?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       hx-target="#tabela-funcionarios-inativos" hx-swap="innerHTML" 
+                       class="inline-flex items-center gap-2 bg-primary text-white hover:bg-opacity-80 font-bold py-2.5 px-4 rounded-xl transition-colors duration-200 text-xs sm:text-sm whitespace-nowrap">
+                        <span class="hidden sm:inline">Última</span><i class="fas fa-angle-double-right text-xs"></i>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 bg-gray-700 text-gray-500 border border-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm whitespace-nowrap cursor-not-allowed">
+                        <span class="hidden sm:inline">Última</span><i class="fas fa-angle-double-right text-xs"></i>
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <div class="text-center py-16 px-4">
+            <div class="w-24 h-24 bg-red-950/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-users-slash text-4xl text-red-500"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-red-300 mb-2">Nenhum funcionário inativo</h3>
+            <p class="text-gray-500 mb-6">
+                Não há funcionários desativados no momento.
+            </p>
+        </div>
+    {% endif %}
+
+</div>

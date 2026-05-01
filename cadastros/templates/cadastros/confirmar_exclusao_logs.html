@@ -1,0 +1,71 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen p-4 sm:p-8 text-white">
+
+    <div class="max-w-2xl w-full text-center bg-gray-900/95 p-8 sm:p-12 rounded-2xl shadow-3xl shadow-black/70 border border-gray-800">
+
+        <div class="text-7xl text-red-500 mb-6 drop-shadow-lg">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl font-bold mb-3 text-red-400">Confirmar Exclusão de Logs</h1>
+
+        {% if delete_all %}
+            <p class="text-gray-300 mb-6 text-lg leading-relaxed">
+                Você tem certeza que deseja excluir <strong class="text-red-400">TODOS</strong> os logs de atividades?
+                <br>
+                <span class="text-sm text-gray-400">Isso afetará {{ logs_to_delete|length }} registros.</span>
+            </p>
+        {% else %}
+            <p class="text-gray-300 mb-6 text-lg leading-relaxed">
+                Você tem certeza que deseja excluir os <strong class="text-red-400">{{ logs_to_delete|length }}</strong> logs selecionados?
+            </p>
+
+            <div class="bg-gray-800/50 p-4 rounded-lg mb-6 max-h-64 overflow-y-auto">
+                <h3 class="text-white font-semibold mb-3">Logs a serem excluídos:</h3>
+                <ul class="text-left text-sm text-gray-300 space-y-2">
+                    {% for log in logs_to_delete %}
+                    <li class="flex justify-between items-center bg-gray-700/30 p-2 rounded">
+                        <span>ID: {{ log.id }} - {{ log.acao }} - {{ log.usuario.get_full_name|default:log.usuario.username }} - {{ log.data_hora|date:"d/m/Y H:i" }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="bg-red-900/30 border border-red-700/50 p-3 rounded-lg mb-8">
+            <p class="text-sm text-red-300 font-medium">
+                <i class="fas fa-history mr-2"></i> Esta ação é irreversível e não pode ser desfeita.
+            </p>
+        </div>
+
+        <form method="post" action="{% url 'listar_log_atividades' %}">
+            {% csrf_token %}
+            {% for log_id in selected_logs %}
+                <input type="hidden" name="selected_logs" value="{{ log_id }}">
+            {% endfor %}
+            {% if delete_all %}
+                <input type="hidden" name="delete_all" value="true">
+            {% endif %}
+            <input type="hidden" name="confirm_delete" value="true">
+            {% for key, value in filtros.items %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endfor %}
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+
+                <a href="{% url 'listar_log_atividades' %}?{{ filtros.urlencode }}" class="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-xl transition-all transform hover:scale-[1.03] shadow-md">
+                    <i class="fas fa-ban mr-2"></i> Cancelar
+                </a>
+
+                <button type="submit" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-[1.03] shadow-lg shadow-red-900/50">
+                    <i class="fas fa-trash-alt mr-2"></i> Confirmar Exclusão
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

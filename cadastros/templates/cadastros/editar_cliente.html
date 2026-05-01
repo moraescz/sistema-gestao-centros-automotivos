@@ -1,0 +1,226 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<style>
+    /* Estilização para todos os campos de formulário (inputs e selects) */
+    .form-style {
+        width: 100%;
+        background-color: #1f2937; /* bg-gray-800 */
+        border: 1px solid #374151; /* border-gray-700 */
+        border-radius: 0.75rem;     /* rounded-xl */
+        padding-top: 0.75rem;       /* py-3 */
+        padding-bottom: 0.75rem;    /* py-3 */
+        padding-left: 1rem;         /* px-4 */
+        padding-right: 1rem;        /* px-4 */
+        color: #ffffff;             /* text-white */
+        transition: all 0.2s ease-in-out;
+
+        /* Remove a aparência padrão (especialmente para 'select') */
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    }
+
+    /* Estilização do placeholder (ex: '000.000.000-00') */
+    .form-style::placeholder {
+        color: #6b7285; /* placeholder-gray-500 */
+    }
+
+    /* Estilização ao focar no campo */
+    .form-style:focus {
+        outline: none;
+        border-color: #3b82f6; /* focus:ring-blue-500 */
+        /* Simula o 'ring-2' e 'ring-offset' */
+        box-shadow: 0 0 0 2px #111827, 0 0 0 4px #3b82f6; 
+    }
+
+    /* --- Correção para Dropdowns (Cidade e Estado) --- */
+    /* Adiciona a seta do dropdown de volta, já que o 'appearance: none' a removeu */
+    select.form-style {
+        /* SVG da seta (Tailwind UI) */
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7285' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.75rem center;
+        background-repeat: no-repeat;
+        background-size: 1.25em;
+        padding-right: 2.5rem; /* Abre espaço para a seta */
+    }
+
+    /* Sobrescreve o estilo de erro, se houver */
+    .is-invalid {
+        border-color: #ef4444; /* border-red-500 */
+    }
+    .is-invalid:focus {
+         box-shadow: 0 0 0 2px #111827, 0 0 0 4px #ef4444; /* focus:ring-red-500 */
+    }
+
+    /* Máscaras para CPF e Telefone (Seu código original) */
+    .cpf-mask, .telefone-mask {
+        font-family: 'Courier New', monospace;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- Máscara para CPF (seu código original) ---
+    const cpfInput = document.getElementById('id_cpf');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = value;
+            }
+        });
+    }
+
+    // --- Máscara para Telefone (seu código original) ---
+    const telefoneInput = document.getElementById('id_telefone');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                if (value.length <= 10) {
+                    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                    value = value.replace(/(\d{4})(\d{4})$/, '$1-$2');
+                } else {
+                    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                    value = value.replace(/(\d{5})(\d{4})$/, '$1-$2');
+                }
+                e.target.value = value;
+            }
+        });
+    }
+
+    // --- NOVO: LÓGICA PARA DROPDOWNS COM API DO IBGE ---
+
+    const stateSelect = document.getElementById('id_estado'); // Pega o select de estado
+    const citySelect = document.getElementById('id_cidade');   // Pega o select de cidade
+    
+    // Pega a cidade que pode já estar selecionada (no caso de edição)
+    // O __init__ do forms.py garante que este valor existe se for uma edição.
+    const savedCity = citySelect.value;
+
+    function loadCities() {
+        // Pega a sigla do estado (ex: "SP", "RJ")
+        const stateUF = stateSelect.value;
+
+        // Reseta o select de cidade e mostra "Carregando..."
+        citySelect.innerHTML = '<option value="">Carregando...</option>';
+
+        if (stateUF) {
+            // URL da API do IBGE para municípios por UF (sigla)
+            const ibgeApiUrl = `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${stateUF}/municipios`;
+
+            fetch(ibgeApiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    // Limpa o select
+                    citySelect.innerHTML = '<option value=""Selecione a Cidade</option>';
+                    
+                    // Ordena os dados pelo nome da cidade
+                    data.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                    // Popula o select com as novas cidades
+                    data.forEach(function(city) {
+                        // O 'valor' e o 'texto' da option serão o NOME da cidade,
+                        // pois seu model salva um CharField.
+                        const option = new Option(city.nome, city.nome);
+                        citySelect.add(option);
+                    });
+                    
+                    // Se tínhamos uma cidade salva (modo de edição),
+                    // tenta re-selecioná-la.
+                    if (savedCity && citySelect.querySelector(`option[value="${savedCity}"]`)) {
+                        citySelect.value = savedCity;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar cidades do IBGE:', error);
+                    citySelect.innerHTML = '<option value="">Erro ao carregar</option>';
+                });
+        } else {
+            // Se nenhum estado for selecionado
+            citySelect.innerHTML = '<option value="">Selecione um Estado</option>';
+        }
+    }
+
+    // Adiciona o "escutador" para o evento de 'change'
+    if (stateSelect && citySelect) {
+        stateSelect.addEventListener('change', loadCities);
+        
+        // Se o formulário carregar com um estado já selecionado (ex: modo de edição),
+        // disparamos a função para carregar as cidades imediatamente.
+        if (stateSelect.value) {
+            loadCities();
+        }
+    }
+    // --- FIM DA NOVA LÓGICA ---
+
+});
+</script>
+
+<div class="flex items-center justify-center min-h-screen p-4 sm:p-8">
+    
+    <div class="w-full max-w-lg bg-gray-900/90 p-8 rounded-2xl shadow-2xl shadow-black/70 border border-gray-800 text-white">
+        
+        <div class="text-center mb-8">
+            <div class="inline-block bg-primary p-4 rounded-full mb-4">
+                <i class="fas fa-user-plus text-4xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold text-white">Editar Cliente</h1>
+            <p class="text-gray-400 mt-2">Preencha os dados abaixo para adicionar um novo cliente à base.</p>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-xl text-sm font-medium mb-4">
+                    <p class="font-bold mb-1">Erro Geral:</p>
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for field in form %}
+                {% with is_error=field.errors %}
+                <div class="relative {% if forloop.first %}md:col-span-2{% endif %}">
+                    <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">
+                        {{ field.label }}
+                        {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    
+                    {{ field|add_class:"form-style" }}
+                    
+                    {% if is_error %}
+                        <div class="text-red-400 text-xs mt-1 font-medium">
+                            <i class="fas fa-exclamation-circle mr-1"></i> {{ field.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+
+            <div class="flex justify-end gap-4 pt-4 border-t border-gray-800">
+                <a href="{% url 'listar_clientes' %}" 
+                   class="inline-flex items-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-xl hover:bg-gray-600 transition-all transform hover:scale-[1.03] shadow-md">
+                   <i class="fas fa-times mr-2"></i> Cancelar
+                </a>
+                
+                <button type="submit" 
+                    class="inline-flex items-center bg-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all transform hover:scale-[1.03]">
+                    <i class="fas fa-user-plus mr-2"></i> Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

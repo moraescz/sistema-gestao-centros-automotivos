@@ -1,0 +1,194 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Estilos para animação (padrão OS) -->
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out forwards;
+    }
+    .animate-slide-up {
+        animation: slideUp 0.8s ease-out forwards;
+    }
+    /* Adicionando delays para os blocos */
+    .animate-delay-1 { animation-delay: 0.2s; }
+    .animate-delay-2 { animation-delay: 0.4s; }
+</style>
+
+<div class="p-4 sm:p-8 max-w-7xl mx-auto text-white space-y-8">
+
+    <!-- Bloco de Mensagens -->
+    {% if messages %}
+    <div class="space-y-2">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg text-center shadow-lg border {% if message.tags == 'error' %} bg-red-600 bg-opacity-80 border-red-500/50 text-white {% elif message.tags == 'success' %} bg-green-600 bg-opacity-80 border-green-500/50 text-white {% else %} bg-blue-600 bg-opacity-80 border-blue-500/50 text-white {% endif %}" role="alert">
+            <i class="fas {% if message.tags == 'error' %}fa-exclamation-triangle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Cabeçalho (Estilo OS) -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <!-- Título H1 (Estilo OS: borda grossa, w-fit) -->
+        <h1 class="text-3xl md:text-3xl font-extrabold text-white flex items-center border-b-4 border-primary pb-2 mb-2 w-fit animate-fade-in">
+            <i class="fas fa-user-circle mr-3 text-3xl text-primary"></i>
+            Detalhes do Cliente
+        </h1>
+        <!-- Botões (Estilo OS: grandes e arredondados) -->
+        <div class="flex gap-3 mt-4 sm:mt-0 animate-fade-in" style="animation-delay: 0.1s;">
+            <a href="{% url 'listar_clientes' %}" 
+               class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg
+                      transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                <i class="fas fa-arrow-left mr-2"></i> Voltar
+            </a>
+            {% if perms.cadastros.change_cliente %}
+            <a href="{% url 'editar_cliente' pk=cliente.pk %}" 
+               class="bg-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/30
+                      transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:brightness-110">
+                <i class="fas fa-pencil-alt mr-2"></i> Editar Cliente
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bloco 1: Informações Pessoais (Card Estilo OS) -->
+    <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 md:p-8 animate-slide-up animate-delay-1">
+        <h2 class="text-2xl font-bold mb-6 text-gray-200 border-b border-gray-700 pb-3 flex items-center">
+            <i class="fas fa-id-card mr-2 text-primary"></i> Informações Pessoais
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <label class="block text-sm font-medium text-gray-400">Nome</label>
+                <p class="mt-1 text-xl font-bold text-white truncate">{{ cliente.nome }}</p>
+            </div>
+            
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <label class="block text-sm font-medium text-gray-400">CPF</label>
+                <p class="mt-1 text-lg font-semibold {% if cliente.cpf %}text-white{% else %}text-gray-500 italic{% endif %}">
+                    {{ cliente.cpf|default:"Não informado" }}
+                </p>
+            </div>
+            
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <label class="block text-sm font-medium text-gray-400">Telefone</label>
+                <p class="mt-1 text-lg font-semibold text-white">{{ cliente.telefone }}</p>
+            </div>
+            
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <label class="block text-sm font-medium text-gray-400">Email</label>
+                <p class="mt-1 text-lg font-semibold {% if cliente.email %}text-white{% else %}text-gray-500 italic{% endif %} truncate">
+                    {{ cliente.email|default:"Não informado" }}
+                </p>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <label class="block text-sm font-medium text-gray-400">Cidade</label>
+                <p class="mt-1 text-lg font-semibold {% if cliente.cidade %}text-white{% else %}text-gray-500 italic{% endif %} truncate">
+                    {{ cliente.cidade|default:"Não informada" }}
+                </p>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <label class="block text-sm font-medium text-gray-400">Estado (UF)</label>
+                <p class="mt-1 text-lg font-semibold {% if cliente.estado %}text-white{% else %}text-gray-500 italic{% endif %}">
+                    {{ cliente.estado|default:"Não informado" }}
+                </p>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Bloco 2: Veículos Cadastrados (Card Estilo OS) -->
+    <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden animate-slide-up animate-delay-2">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-gray-200 flex items-center">
+                <i class="fas fa-car mr-2 text-primary"></i> Veículos Cadastrados ({{ veiculos.count }})
+            </h2>
+        </div>
+
+        {% if veiculos %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <!-- Cabeçalho (Estilo OS: gradiente, ícones) -->
+                <thead class="text-sm uppercase text-gray-200 tracking-wider border-b-2 border-gray-600 bg-gradient-to-r from-gray-700/60 to-gray-800/60">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-semibold"><i class="fas fa-car-side text-primary mr-2"></i>Modelo</th>
+                        <th scope="col" class="px-6 py-4 font-semibold"><i class="fas fa-digital-tachograph text-primary mr-2"></i>Placa</th>
+                        <th scope="col" class="px-6 py-4 font-semibold"><i class="fas fa-calendar-alt text-primary mr-2"></i>Ano</th>
+                        <th scope="col" class="px-6 py-4 font-semibold"><i class="fas fa-palette text-primary mr-2"></i>Cor</th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-center"><i class="fas fa-cogs text-primary mr-2"></i>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for veiculo in veiculos %}
+                    <!-- Linha (Estilo OS: fundo, hover, 'group') -->
+                    <tr class="bg-gray-900/50 transition-all duration-300 hover:bg-gray-700/60 hover:shadow-lg border-b border-gray-700/50 group">
+                        <td class="px-6 py-4 font-medium text-white">{{ veiculo.modelo }}</td>
+                        <td class="px-6 py-4 font-mono text-gray-300">{{ veiculo.placa }}</td>
+                        <td class="px-6 py-4 text-gray-300">{{ veiculo.ano|stringformat:"d" }}</td>
+                        <td class="px-6 py-4 text-gray-300">{{ veiculo.cor|default:"-" }}</td>
+                        <!-- Ações (Estilo OS: ícones, hover 'group') -->
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center space-x-2 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                {% if perms.cadastros.view_ordemservico %}
+                                <a href="{% url 'veiculo_historico' pk=veiculo.pk %}?from=cliente_detalhe" 
+                                   class="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-200 transform hover:scale-110" 
+                                   title="Ver Histórico">
+                                    <i class="fas fa-history"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.cadastros.change_veiculo %}
+                                <a href="{% url 'editar_veiculo' pk=veiculo.pk %}?from=cliente_detalhe" 
+                                   class="p-2 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 transform hover:scale-110" 
+                                   title="Editar Veículo">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.cadastros.delete_veiculo %}
+                                <a href="{% url 'excluir_veiculo' pk=veiculo.pk %}" 
+                                   class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-200 transform hover:scale-110" 
+                                   title="Excluir Veículo">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Estado Vazio (Estilo OS) -->
+        <div class="text-center py-16 px-4">
+            <div class="w-24 h-24 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-car-crash text-4xl text-gray-500"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-300 mb-2">Nenhum veículo registrado</h3>
+            <p class="text-gray-500 mb-6">
+                Este cliente não tem nenhum veículo cadastrado.
+            </p>
+            {% if perms.cadastros.add_veiculo %}
+            <a href="{% url 'cadastrar_veiculo' %}?cliente_id={{ cliente.pk }}" 
+               class="inline-flex items-center gap-2 bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                <i class="fas fa-plus"></i> Cadastrar Primeiro Veículo
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

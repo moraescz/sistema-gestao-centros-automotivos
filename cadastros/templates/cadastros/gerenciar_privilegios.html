@@ -1,0 +1,128 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto text-white">
+
+    <div class="mb-8">
+        <div>
+            <h1 class="text-4xl sm:text-3xl font-extrabold text-white border-b-4 border-primary pb-2 mb-2 w-fit inline-flex items-center">
+                <i class="fas fa-lock mr-3 text-primary text-3xl"></i>
+                Gerenciar Privilégios
+            </h1>
+        </div>
+    </div>
+    <div class="space-y-4">
+        {% for funcionario in funcionarios %}
+        <details class="bg-gray-900 bg-opacity-70 rounded-xl shadow-2xl overflow-hidden group transition-all duration-300 border border-gray-700">
+            <summary class="flex items-center justify-between p-5 cursor-pointer list-none bg-gray-900 transition-colors hover:bg-gray-800">
+                <div class="flex items-center gap-4">
+                    <i class="fas fa-user text-xl text-primary"></i>
+                    <span class="font-bold text-lg text-white">{{ funcionario.get_full_name|default:funcionario.username }}</span>
+                    <span class="text-sm text-gray-400">({{ funcionario.username }})</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+            </summary>
+            
+            <div class="overflow-hidden max-h-0 transition-[max-height] duration-500 ease-in-out group-open:max-h-[100rem]">
+                
+                <div class="bg-gray-900/50 px-5 pb-5 border-t border-gray-700">
+                    <form method="POST" class="py-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ funcionario.pk }}">
+                        
+                        <div class="overflow-x-auto rounded-xl border border-gray-700">
+                            <table class="min-w-full text-sm text-left">
+                                <thead class="bg-primary/70 text-white uppercase tracking-wider">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 font-semibold">Módulo</th>
+                                        <th scope="col" class="px-4 py-3 font-semibold text-center">Visualizar (View)</th>
+                                        <th scope="col" class="px-4 py-3 font-semibold text-center">Criar (Add)</th>
+                                        <th scope="col" class="px-4 py-3 font-semibold text-center">Editar (Change)</th>
+                                        <th scope="col" class="px-4 py-3 font-semibold text-center">Excluir (Delete)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for model_label in perm_models_labels %}
+                                    <tr class="border-b border-gray-700 bg-gray-800/50 hover:bg-gray-700/60 transition-colors">
+                                        
+                                        <td class="px-4 py-3 font-medium whitespace-nowrap text-gray-200">
+                                            {% comment %} Renomeia 'Peca' para 'Estoque' {% endcomment %}
+                                            {% if model_label == 'Peca' %}
+                                                Estoque
+                                            {% else %}
+                                                {{ model_label }}
+                                            {% endif %}
+                                        </td>
+                                        
+                                        {% comment %} CORREÇÃO: Itera sobre a variável 'perm_types' do contexto {% endcomment %}
+                                        {% for perm_type in perm_types %} 
+                                        <td class="px-4 py-3 text-center">
+                                            {% with model_name=perm_models_classes|get_item:model_label %}
+                                            {% with input_id="id_perm_"|add:funcionario.pk|stringformat:"d"|add:"_"|add:model_name|add:"_"|add:perm_type %}
+                                            {% with input_name="perm_"|add:model_name|add:"_"|add:perm_type %}
+                                                
+                                                {% comment %} Verifica se o checkbox deve ser desabilitado {% endcomment %}
+                                                {% with is_disabled=False %}
+                                                    {% if model_label == 'Dashboard' and perm_type != 'view' %}
+                                                        {% with is_disabled=True %}{% endwith %}
+                                                    {% elif model_label == 'Configurações Gerais' and perm_type not in 'change' %}
+                                                        {% with is_disabled=True %}{% endwith %}
+                                                    {% endif %}
+
+                                                    <input 
+                                                        type="checkbox" 
+                                                        id="{{ input_id }}" 
+                                                        name="{{ input_name }}"
+                                                        value="1"
+                                                        class="h-5 w-5 rounded focus:ring-offset-gray-900 transition duration-150 ease-in-out
+                                                        {% comment %} Lógica de desabilitar movida para cá {% endcomment %}
+                                                        {% if model_label == 'Dashboard' and perm_type != 'view' or model_label == 'Configurações Gerais' and perm_type != 'view' and perm_type != 'change' %}
+                                                            text-gray-500 bg-gray-700 border-gray-600 cursor-not-allowed focus:ring-0 focus:ring-offset-0
+                                                        {% else %}
+                                                            text-primary bg-gray-700 border-gray-600 focus:ring-primary 
+                                                        {% endif %}"
+                                                        
+                                                        {% comment %} Verifica se deve vir marcado {% endcomment %}
+                                                        {% if permissions_data|get_item:funcionario.pk|get_item:model_label|get_item:perm_type %}checked{% endif %}
+                                                        
+                                                        {% comment %} Lógica de desabilitar movida para cá {% endcomment %}
+                                                        {% if model_label == 'Dashboard' and perm_type != 'view' or model_label == 'Configurações Gerais' and perm_type != 'view' and perm_type != 'change' %}
+                                                            disabled
+                                                        {% endif %}
+                                                        >
+                                                    <label for="{{ input_id }}" class="sr-only">{{ model_label }} {{ perm_type }}</label>
+                                                {% endwith %}
+                                            {% endwith %}
+                                            {% endwith %}
+                                            {% endwith %}
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex justify-end mt-6">
+                            <button type="submit" class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-opacity-85 transition-colors duration-200 shadow-lg shadow-primary/30 transform hover:scale-[1.01]">
+                                <i class="fas fa-save mr-2"></i> Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </details>
+        {% empty %}
+        <div class="bg-gray-900 bg-opacity-70 rounded-xl p-8 text-center text-gray-400 border border-gray-700 shadow-xl">
+            Nenhum funcionário ativo encontrado para gerenciar permissões.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

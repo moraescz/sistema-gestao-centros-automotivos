@@ -1,0 +1,495 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* --- 1. DEFINIÇÃO DO FUNDO --- */
+    body {
+        /* Define uma imagem inicial para evitar flash branco, mas o JS vai gerenciar a prioridade logo abaixo */
+        background-image: url('https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=1920&auto=format&fit=crop');
+        background-size: cover;
+        background-attachment: fixed;
+        background-position: center;
+        background-repeat: no-repeat;
+        transition: background-image 0.5s ease-in-out;
+    }
+
+    /* --- CSS do Color Picker --- */
+    .color-picker-input {
+        -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        background-color: transparent; border: none; transition: all 0.2s;
+        padding: 0; cursor: pointer;
+    }
+    .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker-input::-webkit-color-swatch { border-radius: 0.75rem; border: 3px solid transparent; }
+    .color-picker-input:hover::-webkit-color-swatch { border: 3px solid #6B7280; }
+    .color-picker-input::-moz-color-swatch-wrapper { padding: 0; }
+    .color-picker-input::-moz-color-swatch { border-radius: 0.75rem; border: 3px solid transparent; }
+    .color-picker-input:hover::-moz-color-swatch { border: 3px solid #6B7280; }
+    
+    /* --- Notificação Flutuante (Toast) --- */
+    #toast-notification {
+        visibility: hidden; min-width: 250px; background-color: #10B981; color: #fff;
+        text-align: center; border-radius: 8px; padding: 16px; position: fixed;
+        z-index: 50; right: 30px; bottom: 30px; font-size: 17px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); opacity: 0; transition: opacity 0.5s, bottom 0.5s;
+    }
+    #toast-notification.show { visibility: visible; opacity: 1; bottom: 50px; }
+</style>
+
+{# --- 2. SOBRESCRITA CSS VIA DJANGO (PRIORIDADE MÁXIMA INICIAL) --- #}
+{% if form.instance.imagem_fundo %}
+<style>
+    body {
+        background-image: url("{{ form.instance.imagem_fundo.url }}") !important;
+    }
+</style>
+{% endif %}
+
+<div class="p-4 sm:p-8 max-w-4xl mx-auto text-white">
+
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold border-b-4 border-primary pb-2 inline-flex items-center gap-2 w-fit">
+            <i class="fas fa-cog text-primary"></i>
+            Configurações Gerais
+        </h1>
+    </div>
+    
+
+    <div id="formContainer">
+        <form method="POST" enctype="multipart/form-data" id="configForm">
+            {% csrf_token %}
+            <div class="bg-gray-900/90 rounded-2xl shadow-3xl p-6 md:p-8 space-y-10 border border-gray-800">
+
+                {% if form.non_field_errors %}
+                <div class="bg-red-500 bg-opacity-20 border border-red-500 text-red-300 p-4 rounded-lg font-medium" role="alert">
+                    <p class="font-bold mb-1">Erro de Validação:</p>
+                    {% for error in form.non_field_errors %}
+                    <p class="text-sm">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="space-y-6">
+                    <h2 class="text-xl font-bold text-white border-b border-gray-700 pb-3">
+                        <i class="fas fa-building mr-2 text-primary"></i> Informações da Empresa
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.nome_empresa.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Nome da Empresa</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-tag w-4 h-4 text-gray-500"></i>
+                                </div>
+                                <input type="text" name="{{ form.nome_empresa.name }}" id="{{ form.nome_empresa.id_for_label }}" value="{{ form.nome_empresa.value|default:'' }}"
+                                    class="w-full bg-gray-800 border rounded-xl py-2 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 
+                                    {% if form.nome_empresa.errors %}border-red-500 focus:ring-red-500{% else %}border-gray-700 focus:ring-primary{% endif %}">
+                            </div>
+                            {% if form.nome_empresa.errors %}
+                            <p class="mt-2 text-sm text-red-400 font-medium">{{ form.nome_empresa.errors|striptags }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6 pt-6 border-t border-gray-800">
+                    <h2 class="text-xl font-bold text-white border-b border-gray-700 pb-3">
+                        <i class="fas fa-images mr-2 text-primary"></i> Identidade Visual (Imagens)
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300">Logo da Empresa</label>
+                            <p class="text-xs text-gray-500 mb-2">Recomendado: PNG com fundo transparente.</p>
+                            <div class="mt-2 flex items-center gap-4">
+                                <div class="w-24 h-24 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden border-4 border-dashed border-gray-700/50">
+                                    {% if form.instance.logo %}
+                                    <img src="{{ form.instance.logo.url }}" alt="Logo Atual" class="object-cover w-full h-full" id="logo-preview">
+                                    <svg id="logo-preview-placeholder" class="w-12 h-12 text-gray-500 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                    {% else %}
+                                    <svg id="logo-preview-placeholder" class="w-12 h-12 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                    <img src="#" alt="Prévia do Logo" class="object-cover w-full h-full hidden" id="logo-preview">
+                                    {% endif %}
+                                </div>
+                                <input type="file" name="{{ form.logo.name }}" id="{{ form.logo.id_for_label }}" class="hidden" onchange="previewImage(event, 'logo-preview', 'logo-preview-placeholder')" accept="image/*">
+                                <label for="{{ form.logo.id_for_label }}" 
+                                    class="cursor-pointer bg-primary text-white font-semibold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                                    <i class="fas fa-upload mr-2"></i> Trocar Logo
+                                </label>
+                            </div>
+                            {% if form.logo.errors %}
+                            <p class="mt-2 text-sm text-red-400 font-medium">{{ form.logo.errors|striptags }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300">Imagem de Fundo</label>
+                            <p class="text-xs text-gray-500 mb-2">Recomendado: 1920x1080px.</p>
+                            <div class="mt-2 flex items-center gap-4">
+                                <div class="w-24 h-24 shrink-0 rounded-lg bg-gray-800 flex items-center justify-center overflow-hidden border-4 border-dashed border-gray-700/50">
+                                    {% if form.instance.imagem_fundo %}
+                                    <img src="{{ form.instance.imagem_fundo.url }}" alt="Fundo Atual" class="object-cover w-full h-full" id="bg-preview">
+                                    <svg id="bg-preview-placeholder" class="w-12 h-12 text-gray-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    {% else %}
+                                    <img src="https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=1920&auto=format&fit=crop" alt="Fundo Padrão" class="object-cover w-full h-full" id="bg-preview">
+                                    <svg id="bg-preview-placeholder" class="w-12 h-12 text-gray-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    {% endif %}
+                                </div>
+                                
+                                <input type="checkbox" name="{{ form.imagem_fundo.name }}-clear" id="id_{{ form.imagem_fundo.name }}-clear" class="hidden">
+                                
+                                <input type="file" name="{{ form.imagem_fundo.name }}" id="{{ form.imagem_fundo.id_for_label }}" class="hidden" onchange="previewImage(event, 'bg-preview', 'bg-preview-placeholder')" accept="image/*">
+                                
+                                <div class="flex flex-col space-y-3 w-full">
+                                    <label for="{{ form.imagem_fundo.id_for_label }}" 
+                                        class="cursor-pointer bg-primary text-white font-semibold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105 text-center">
+                                        <i class="fas fa-upload mr-2"></i> Trocar Fundo
+                                    </label>
+                                </div>
+                        
+                            </div>
+                            {% if form.imagem_fundo.errors %}
+                            <p class="mt-2 text-sm text-red-400 font-medium">{{ form.imagem_fundo.errors|striptags }}</p>
+                            {% endif %}
+                        </div>
+                </div>
+
+                <div class="space-y-6 pt-6 border-t border-gray-800">
+                    <h2 class="text-xl font-bold text-white border-b border-gray-700 pb-3">
+                        <i class="fas fa-palette mr-2 text-primary"></i> Cores do Tema
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label for="{{ form.cor_primaria.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Cor Primária</label>
+                            <div class="flex items-center space-x-4">
+                                <input type="color" name="{{ form.cor_primaria.name }}" id="{{ form.cor_primaria.id_for_label }}" value="{{ form.cor_primaria.value|default:'#0d6efd' }}"
+                                    class="w-16 h-12 rounded-xl border-2 border-gray-700 p-0.5 color-picker-input">
+                                <input type="text" id="hex_cor_primaria" value="{{ form.cor_primaria.value|default:'#0d6efd' }}" maxlength="7"
+                                    class="w-full bg-gray-800 border rounded-xl py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 border-gray-700 focus:ring-primary text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="{{ form.cor_secundaria.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Cor Secundária</label>
+                            <div class="flex items-center space-x-4">
+                                <input type="color" name="{{ form.cor_secundaria.name }}" id="{{ form.cor_secundaria.id_for_label }}" value="{{ form.cor_secundaria.value|default:'#10B981' }}"
+                                    class="w-16 h-12 rounded-xl border-2 border-gray-700 p-0.5 color-picker-input">
+                                <input type="text" id="hex_cor_secundaria" value="{{ form.cor_secundaria.value|default:'#10B981' }}" maxlength="7"
+                                    class="w-full bg-gray-800 border rounded-xl py-2 px-4 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 border-gray-700 focus:ring-blue-500 text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-gray-800 flex justify-end">
+                    <button type="submit" id="btnSalvar"
+                            class="bg-primary text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] flex items-center">
+                        <i class="fas fa-save mr-2" id="iconSalvar"></i>
+                        <span id="textoSalvar">Salvar Alterações</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toast-notification">
+    <i class="fas fa-check-circle mr-2"></i> Alterações salvas com sucesso!
+</div>
+
+<script>
+    /* --- Funções Auxiliares --- */
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function previewImage(event, previewId, placeholderId) {
+        // Verifica se há arquivos para upload
+        if (event.target.files && event.target.files[0]) {
+            
+            // 🚀 CORREÇÃO PRINCIPAL: Desmarcar o checkbox de "clear" para garantir que 
+            // o Django não apague o campo se o usuário fizer um upload depois de clicar em Restaurar.
+            if (event.target.name.includes('imagem_fundo')) {
+                const clearCheckbox = document.getElementById('id_imagem_fundo-clear');
+                if (clearCheckbox) clearCheckbox.checked = false;
+            }
+
+            const reader = new FileReader();
+            
+            const previewElement = document.getElementById(previewId);
+            const placeholderElement = document.getElementById(placeholderId);
+            const siteLogo = document.getElementById('site-logo'); 
+
+            reader.onload = function(e){
+                const newSrc = e.target.result;
+
+                // 1. Atualiza a prévia dentro do formulário
+                if(previewElement) {
+                    previewElement.src = newSrc;
+                    previewElement.classList.remove('hidden');
+                }
+                if (placeholderElement) placeholderElement.classList.add('hidden');
+
+                // 2. LÓGICA DE TEMPO REAL (MANTIDA PARA PREVIEW IMEDIATO)
+                // Se o input alterado tiver "logo" no nome, atualiza a logo do site
+                if (event.target.name.includes('logo') && siteLogo) {
+                    siteLogo.src = newSrc;
+                }
+                
+                // Se for imagem de fundo, atualiza o body na hora
+                if (event.target.name.includes('imagem_fundo')) {
+                    document.body.style.backgroundImage = `url('${newSrc}')`;
+                }
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        } else if (!event.target.files || event.target.files.length === 0) {
+            // Se o arquivo for removido/cancelado (embora raro em inputs file)
+            const previewElement = document.getElementById(previewId);
+            const placeholderElement = document.getElementById(placeholderId);
+            
+            // Se for input de fundo e estiver cancelando, pode ser útil marcar o clear, 
+            // mas é melhor deixar a lógica de limpeza para o botão "Restaurar" ou para a lógica do Django.
+            
+            if(previewElement) {
+                // Oculta a imagem de prévia
+                previewElement.classList.add('hidden');
+                // Nota: Se você deseja que ao cancelar o upload ele volte para a imagem anterior (do servidor), 
+                // seria necessário armazenar essa URL em uma variável JS no carregamento da página.
+            }
+            if (placeholderElement) placeholderElement.classList.remove('hidden');
+        }
+    }
+    // --- Sincronização de Cores ---
+    function syncColor(value, colorPickerId, hexInputId) {
+        const colorPickerElement = document.getElementById(colorPickerId);
+        const hexInputElement = document.getElementById(hexInputId);
+        const isValidHex = /^#([0-9A-F]{3}){1,2}$/i.test(value);
+        
+        if (isValidHex) {
+            if (colorPickerElement.value !== value) colorPickerElement.value = value;
+            if (hexInputElement.value !== value) hexInputElement.value = value;
+            
+            // Aplica a cor imediatamente via Variáveis CSS (se configurado no seu CSS base)
+            if (colorPickerId.includes('cor_primaria')) {
+                document.documentElement.style.setProperty('--cor-primaria', value);
+            } else if (colorPickerId.includes('cor_secundaria')) {
+                document.documentElement.style.setProperty('--cor-secundaria', value);
+            }
+        }
+    }
+
+    function attachColorListeners() {
+        const primaryColorPickerId = '{{ form.cor_primaria.id_for_label }}';
+        const secondaryColorPickerId = '{{ form.cor_secundaria.id_for_label }}';
+        
+        const primaryHexInputId = 'hex_cor_primaria';
+        const secondaryHexInputId = 'hex_cor_secundaria';
+
+        const pInput = document.getElementById(primaryHexInputId); 
+        const pPicker = document.getElementById(primaryColorPickerId);
+        const sInput = document.getElementById(secondaryHexInputId); 
+        const sPicker = document.getElementById(secondaryColorPickerId);
+
+        if(pInput) pInput.oninput = function() { syncColor(this.value, primaryColorPickerId, primaryHexInputId); };
+        if(pPicker) pPicker.onchange = function() { syncColor(this.value, primaryColorPickerId, primaryHexInputId); };
+        if(sInput) sInput.oninput = function() { syncColor(this.value, secondaryColorPickerId, secondaryHexInputId); };
+        if(sPicker) sPicker.onchange = function() { syncColor(this.value, secondaryColorPickerId, secondaryHexInputId); };
+    }
+
+    function setupRestoreBackground() {
+        // 1. Inicializa Elementos
+        const btnDefinir = document.getElementById('btnDefinirPadrao'); 
+        const btnRestaurar = document.getElementById('btnRestaurarFundo');
+        const bgInput = document.getElementById('id_imagem_fundo'); 
+        const clearCheckbox = document.getElementById('id_imagem_fundo-clear'); 
+        const bgPreview = document.getElementById('bg-preview');
+        const bgPlaceholder = document.getElementById('bg-preview-placeholder');
+
+        // URL Padrão do sistema (fallback)
+        const systemUrl = "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=1920&auto=format&fit=crop";
+        
+        // Tenta obter a URL definida pelo usuário (se existir)
+        let activeDefaultUrl = localStorage.getItem('meuFundoPadrao') || systemUrl;
+
+        // --- Definir como Padrão ---
+        if (btnDefinir) {
+            btnDefinir.addEventListener('click', function() {
+                // Usa a URL atual do preview, que pode ser a do servidor ou a Data URL do novo upload B
+                if (bgPreview && bgPreview.src && !bgPreview.classList.contains('hidden')) {
+                    try {
+                        localStorage.setItem('meuFundoPadrao', bgPreview.src);
+                        // Atualiza a URL padrão ativa para o novo valor salvo
+                        activeDefaultUrl = bgPreview.src; 
+                        alert("Fundo definido como padrão local no navegador!"); 
+                    } catch (e) {
+                        console.error("Erro ao salvar no localStorage:", e);
+                        alert("Imagem muito grande para salvar localmente.");
+                    }
+                }
+            });
+        }
+
+        // --- Restaurar ---
+        if (btnRestaurar) {
+            btnRestaurar.addEventListener('click', function() {
+                
+                // 1. Limpa o input de arquivo e DESMARCA o checkbox de limpar no Django.
+                // Isso garante que NENHUM arquivo seja enviado ao salvar, e o campo não seja apagado.
+                if (bgInput) bgInput.value = '';
+                if (clearCheckbox) clearCheckbox.checked = false; 
+
+                // 2. Aplica a URL Padrão Salva no localStorage ou a do sistema.
+                const finalUrl = activeDefaultUrl; 
+                
+                // 3. Atualiza a Prévia Visual e o Background do Body
+                if(bgPreview) {
+                    bgPreview.src = finalUrl;
+                    bgPreview.classList.remove('hidden');
+                }
+                if(bgPlaceholder) bgPlaceholder.classList.add('hidden');
+                
+                document.body.style.backgroundImage = `url('${finalUrl}')`;
+
+                // Opcional: Feedback
+                if (finalUrl === systemUrl) {
+                    alert("Fundo restaurado para o padrão do sistema.");
+                } else {
+                    alert("Fundo restaurado para o seu padrão local.");
+                }
+            });
+        }
+    }
+    
+    // FUNÇÃO DE ATUALIZAÇÃO DA INTERFACE COM AS NOVAS URLs (Corrigida)
+    function updateImagePreviews(newUrls, nomeEmpresa) {
+        const siteLogo = document.getElementById('site-logo'); 
+        const logoPreview = document.getElementById('logo-preview');
+        const bgPreview = document.getElementById('bg-preview');
+        
+        // 1. Atualiza Logo
+        if (newUrls.logo_url) {
+            if (logoPreview) logoPreview.src = newUrls.logo_url;
+            if (siteLogo) siteLogo.src = newUrls.logo_url;
+        }
+        // Garante que o input file seja limpo (para não ser enviado novamente a menos que o usuário escolha novo arquivo)
+        const logoInput = document.getElementById('{{ form.logo.id_for_label }}');
+        if(logoInput) logoInput.value = '';
+
+
+        // 2. Atualiza Imagem de Fundo
+        if (newUrls.imagem_fundo_url) {
+            const url = newUrls.imagem_fundo_url;
+            if (bgPreview) bgPreview.src = url;
+            document.body.style.backgroundImage = `url('${url}')`;
+        }
+        // Garante que o input file seja limpo
+        const bgInput = document.getElementById('{{ form.imagem_fundo.id_for_label }}');
+        if(bgInput) bgInput.value = '';
+
+        // 3. Atualiza Título da Página (Melhoria)
+        if (nomeEmpresa) {
+            document.title = nomeEmpresa;
+        }
+
+        // 4. Atualiza cores
+        if (newUrls.cor_primaria) document.documentElement.style.setProperty('--cor-primaria', newUrls.cor_primaria);
+        if (newUrls.cor_secundaria) document.documentElement.style.setProperty('--cor-secundaria', newUrls.cor_secundaria);
+        // OBS: A função syncColor já atualiza os campos de input, então não é estritamente necessário aqui, mas garante
+        // se a view retornar as cores salvas (o que deve acontecer se for sucesso).
+    }
+
+    function showToast() {
+        const toast = document.getElementById("toast-notification");
+        toast.className = "show";
+        setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+    }
+
+
+    async function handleFormSubmit(e) {
+        e.preventDefault(); 
+        const form = e.target; 
+        const btnSalvar = document.getElementById('btnSalvar');
+        const textoSalvar = document.getElementById('textoSalvar');
+        const formContainer = document.getElementById('formContainer');
+
+        btnSalvar.disabled = true;
+        btnSalvar.classList.add('opacity-75', 'cursor-not-allowed');
+        textoSalvar.innerText = "Salvando...";
+
+        const formData = new FormData(form);
+        const csrftoken = getCookie('csrftoken');
+
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'POST', body: formData, headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' } 
+            });
+            
+            const contentType = response.headers.get("content-type");
+
+            if (response.ok) {
+                
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const data = await response.json();
+                    
+                    // 1. Atualiza as prévias de imagem e o body
+                    updateImagePreviews(data.urls, data.nome_empresa); 
+                    
+                    // 2. ATUALIZA OS VALORES DOS CAMPOS DO FORMULÁRIO COM OS DADOS RETORNADOS (CRUCIAL)
+                    // Isto garante que o campo 'nome_empresa' e os inputs de cor reflitam o valor salvo.
+                    const nomeEmpresaInput = document.getElementById('{{ form.nome_empresa.id_for_label }}');
+                    if (nomeEmpresaInput) nomeEmpresaInput.value = data.nome_empresa;
+
+                    // Atualiza os inputs de cor e sincroniza os campos de cor/hex
+                    syncColor(data.urls.cor_primaria, '{{ form.cor_primaria.id_for_label }}', 'hex_cor_primaria');
+                    syncColor(data.urls.cor_secundaria, '{{ form.cor_secundaria.id_for_label }}', 'hex_cor_secundaria');
+
+
+                    showToast();
+
+                } else {
+                    console.error("Sucesso, mas o tipo de resposta não é JSON. Recarregando...");
+                    window.location.reload(); 
+                }
+                
+            } else { // Se o status for 4xx ou 5xx
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newContainer = doc.getElementById('formContainer');
+
+                if (newContainer) {
+                    formContainer.innerHTML = newContainer.innerHTML;
+                    attachColorListeners();
+                    const newForm = document.getElementById('configForm');
+                    if(newForm) newForm.addEventListener('submit', handleFormSubmit);
+                    formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    console.error('Erro de Servidor: Formulário não encontrado na resposta.');
+                    alert("Erro no servidor: Falha ao processar a resposta. Recarregue a página.");
+                }
+
+            }
+        } catch (error) { 
+            console.error('Erro de rede ou parsing:', error); 
+            alert("Erro de conexão ou processamento. Verifique o console.");
+        } finally {
+            if(btnSalvar) { 
+                btnSalvar.disabled = false; 
+                btnSalvar.classList.remove('opacity-75', 'cursor-not-allowed'); 
+            }
+            if(textoSalvar) textoSalvar.innerText = "Salvar Alterações";
+        }
+    }
+</script>
+{% endblock %}

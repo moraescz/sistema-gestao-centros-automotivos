@@ -1,0 +1,217 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - {{ configuracoes.nome_empresa|default:"Centro Automotivo" }}</title>
+    <link rel="icon" type="image/png" href="{% if configuracoes.logo and configuracoes.logo.url %}{{ configuracoes.logo.url }}{% else %}{% static 'images/logo.png' %}{% endif %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Define as cores primárias para consistência, mesmo sem o obj 'configuracoes' */
+        :root {
+            --cor-primaria: {{ configuracoes.cor_primaria|default:'#0d6efd' }};
+            --cor-secundaria: {{ configuracoes.cor_secundaria|default:'#10B981' }};
+        }
+
+        /* --- Animações de Entrada --- */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* --- Animação do Logo --- */
+        @keyframes gentleFloat {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* Aplica as animações */
+        .login-card {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .logo-img {
+            animation: gentleFloat 3s ease-in-out infinite, fadeInUp 0.5s ease-out forwards;
+            animation-delay: 0s, 0.1s;
+        }
+        
+        .form-field {
+            opacity: 0;
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+
+        /* --- Botão com Gradiente Animado --- */
+        .btn-gradient {
+            background: linear-gradient(90deg, var(--cor-secundaria) 0%, var(--cor-primaria) 100%);
+            background-size: 200% auto;
+            color: white;
+            transition: background-position 0.4s ease-in-out, transform 0.2s ease;
+        }
+
+        .btn-gradient:hover {
+            background-position: right center;
+            transform: scale(1.03);
+            filter: brightness(1.1);
+        }
+
+        /* --- Estilo de Foco dos Inputs (MANTIDO) --- */
+        .form-input-styled {
+            border-color: #374151;
+            background-color: #1f2937;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            /* Adicionado padding-left para o ícone */
+            padding-left: 3.25rem !important; /* 1.25rem (p-3) + 2rem para o ícone */
+        }
+        
+        .form-input-styled:focus {
+            outline: none;
+            border-color: var(--cor-primaria);
+            box-shadow: 0 0 0 2px var(--cor-primaria);
+        }
+
+        /* --- [NOVO] Esconde o botão nativo de "ver senha" --- */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-webkit-reveal {
+            display: none;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-900 h-screen overflow-hidden">
+
+    <div class="relative h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" 
+        style="
+            background-image: url('{% if configuracoes.imagem_fundo and configuracoes.imagem_fundo.url %}{{ configuracoes.imagem_fundo.url }}{% else %}{% static 'images/fundo site tcc.png' %}{% endif %}');
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        ">
+        <div class="absolute bg-black opacity-40 inset-0 z-0"></div> 
+        
+        <div class="login-card max-w-md w-full space-y-8 p-10 bg-gray-900 bg-opacity-80 rounded-2xl shadow-2xl z-10 border border-gray-700/50">
+            <div>
+                <img class="logo-img mx-auto h-24 w-auto rounded-full" src="{% if configuracoes.logo and configuracoes.logo.url %}{{ configuracoes.logo.url }}{% else %}{% static 'images/logo.png' %}{% endif %}" alt="Logo">
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-white" style="animation-delay: 0.2s;">
+                    Bem-vindo(a) de volta!
+                </h2>
+                <p class="mt-2 text-center text-sm text-gray-300 form-field" style="animation-delay: 0.3s;">
+                    Faça login para acessar o sistema
+                </p>
+            </div>
+            
+            <form class="mt-8 space-y-6" method="POST">
+                {% csrf_token %}
+                
+                <div class="space-y-4">
+                    
+                    <div class="relative form-field" style="animation-delay: 0.4s;">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 z-20">
+                            <i class="fas fa-user text-gray-500"></i>
+                        </span>
+                        <input id="username" name="username" type="text" autocomplete="username" required 
+                                class="form-input-styled relative block w-full py-3 border rounded-lg text-white placeholder-gray-500 sm:text-sm" 
+                                placeholder="Nome de usuário ou e-mail">
+                    </div>
+
+                    <div class="relative form-field" style="animation-delay: 0.5s;">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 z-20">
+                            <i class="fas fa-lock text-gray-500"></i>
+                        </span>
+                        
+                        <input id="password" name="password" type="password" autocomplete="current-password" required 
+                                class="form-input-styled relative block w-full py-3 pr-12 border rounded-lg text-white placeholder-gray-500 sm:text-sm" 
+                                placeholder="Sua senha">
+                        
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 flex items-center pr-4 z-20 text-gray-500 hover:text-gray-300 transition-colors">
+                            <i id="eye-icon" class="fas fa-eye"></i>
+                            <i id="eye-off-icon" class="fas fa-eye-slash hidden"></i>
+                        </button>
+                    </div>
+
+                </div>
+
+                {% if form.errors or form.non_field_errors %}
+                    <div class="form-field bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative" role="alert" style="animation-delay: 0.6s;">
+                        <div class="flex">
+                            <div class="py-1">
+                                <i class="fas fa-exclamation-circle mr-3"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold">
+                                    Usuário ou senha inválidos. Tente novamente.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+
+                <div class="form-field" style="animation-delay: 0.7s;">
+                    <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent 
+                        bg-primary text-white hover:bg-opacity-80 font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-primary 
+                        transition ease-in-out duration-300 transform hover:scale-[1.02] hover:-translate-y-[1px] text-lg"> 
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <i class="fas fa-arrow-right-to-bracket text-white/70"></i>
+                        </span>
+                        Entrar
+                    </button>
+                </div>
+
+                <div class="text-sm text-center mt-4 form-field" style="animation-delay: 0.8s;">
+                    <a href="{% url 'password_reset' %}" class="font-medium text-primary hover:text-primary transition-colors">
+                        Esqueceu sua senha?
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eye-icon');
+        const eyeOffIcon = document.getElementById('eye-off-icon');
+
+        // Alterna o tipo do input e os ícones
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.add('hidden');
+            eyeOffIcon.classList.remove('hidden');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('hidden');
+            eyeOffIcon.classList.add('hidden');
+        }
+    });
+
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    // Mapeia a cor primária para a variável CSS
+                    'primary': 'var(--cor-primaria)', 
+                },
+            }
+        }
+    }
+</script>
+
+</body>
+</html>

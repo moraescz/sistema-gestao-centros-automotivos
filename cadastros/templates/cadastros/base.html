@@ -1,0 +1,556 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ configuracoes.nome_empresa|default:"Centro Automotivo" }}</title>
+    <link rel="icon" type="image/png" href="{% if configuracoes.logo and configuracoes.logo.url %}{{ configuracoes.logo.url }}{% else %}{% static 'images/logo.png' %}{% endif %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="//unpkg.com/alpinejs" defer></script>
+    
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body { font-family: 'Inter', sans-serif;}
+        :root {
+            --cor-primaria: {{ configuracoes.cor_primaria|default:'#0d6efd' }};
+            --cor-secundaria: {{ configuracoes.cor_secundaria|default:'#10B981' }};
+            --sidebar-bg: #212529;
+            --sidebar-active-bg: #343a40;
+            --sidebar-collapsed-width: 5rem;
+            --sidebar-expanded-width: 16rem;
+            --tabela-linha-impar-bg: #212529; /* Fundo da linha ímpar (base escura) */
+            --tabela-linha-par-bg: rgba(var(--cor-primaria-rgb), 0.08); /* Fundo da linha par (destaque suave) */
+            --tabela-hover-bg: rgba(var(--cor-primaria-rgb), 0.15); /* Fundo da linha ao passar o mouse */
+        }
+
+        /* ... Estilos de Tabela e Formulário (inalterados) ... */
+        .table-listagem { background-color: #1f2937; color: #f3f4f6; border-radius: 0.75rem; overflow: hidden; }
+        .table-listagem tr:nth-child(odd) { background-color: #111827; }
+        .table-listagem tr:nth-child(even) { background-color: #1e293b; }
+        .table-listagem tr:hover { background-color: var(--cor-primaria); color: white; transition: background-color 0.2s ease-in-out, transform 0.1s; transform: scale(1.005); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .table-listagem thead th { background-color: var(--sidebar-bg); color: #9ca3af; font-weight: 600; }
+        .table-listagem a { color: var(--cor-secundaria); text-decoration: none; transition: color 0.2s; }
+        .table-listagem a:hover { color: var(--cor-primaria); text-decoration: underline; }
+        .table-header-themed { background-color: var(--cor-primaria); opacity: 0.3; color: var(--sidebar-text-color-light); font-weight: 600; }
+        .table-row-themed:nth-child(odd) { background-color: #111827; color: #f3f4f6; }
+        .table-row-themed:nth-child(even) { background-color: rgba(var(--cor-primaria-rgb), 0.10); color: #f3f4f6; }
+        .table-row-themed:hover { background-color: var(--cor-secundaria); opacity: 0.2; color: #f3f4f6; transition: background-color 0.2s ease-in-out; }
+        .table-item-main-themed { color: var(--cor-secundaria); }
+        .bg-primary { background-color: var(--cor-primaria); }
+        .bg-secondary { background-color: var(--cor-secundaria); }
+        .text-primary { color: var(--cor-primaria); }
+        .border-primary { border-color: var(--cor-primaria); }
+        .hover-bg-primary:hover { filter: brightness(90%); }
+        .hover-text-primary:hover { filter: brightness(80%); }
+        .form-input-styled { width: 100%; background-color: rgba(17, 24, 39, 0.5); border: 1px solid #374151; color: white; border-radius: 0.5rem; padding: 0.5rem 0.75rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-input-styled:focus { outline: none; border-color: var(--cor-primaria); box-shadow: 0 0 0 2px var(--cor-primaria); }
+
+
+        /* --- [INÍCIO DA SEÇÃO MODIFICADA] ESTILOS DA SIDEBAR --- */
+
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            width: var(--sidebar-collapsed-width); /* 5rem (padrão) */
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+        }
+        
+        /* Classe .is-open (ativada por JS no mobile) */
+        .sidebar.is-open {
+            width: var(--sidebar-expanded-width); /* 16rem */
+        }
+
+        /* --- [ALTERAÇÃO AQUI] Scroll agora VISÍVEL e estilizado --- */
+        .sidebar nav {
+            overflow-y: auto; overflow-x: hidden;
+            /* As linhas 'ms-overflow-style' e 'scrollbar-width' foram removidas */
+            /* para que o scroll sempre apareça quando necessário. */
+        }
+        .sidebar nav::-webkit-scrollbar {
+            /* display: none; */ /* <-- REMOVIDO: Isso escondia o scroll */
+            width: 6px; /* Adiciona um scroll discreto */
+        }
+        /* [NOVO] Estilização para o scroll ficar visível, mas bonito */
+        .sidebar nav::-webkit-scrollbar-thumb {
+            background-color: #4b5563; /* Um cinza-escuro */
+            border-radius: 3px;
+        }
+        .sidebar nav::-webkit-scrollbar-track {
+            background-color: var(--sidebar-bg);
+        }
+        /* --- FIM DA ALTERAÇÃO NO SCROLL --- */
+
+
+        /* --- Animação de Texto (CORRIGIDA) --- */
+        .sidebar .sidebar-text {
+            opacity: 0;
+            transform: translateX(-10px);
+            
+            /* Transição de FECHAMENTO (rápida e sem delay) */
+            transition: opacity 0.05s linear, transform 0.05s linear;
+            transition-delay: 0s; 
+            
+            white-space: nowrap;
+        }
+        
+        /* O texto aparece APENAS com .is-open (mobile) */
+        .sidebar.is-open .sidebar-text {
+            opacity: 1;
+            transform: translateX(0);
+
+            /* Transição de ABERTURA (lenta e com delay) */
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+        }
+
+        /* --- Animação escalonada (CORRIGIDA) --- */
+        
+        /* 1. Define o delay de FECHAMENTO para 0s para todos */
+        .sidebar .sidebar-item:nth-child(1) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(2) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(3) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(4) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(5) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(6) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(7) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(8) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(9) .sidebar-text { transition-delay: 0s; }
+        .sidebar .sidebar-item:nth-child(10) .sidebar-text { transition-delay: 0s; }
+
+        /* 2. SOBRESCREVE o delay APENAS para a ABERTURA (com .is-open) */
+        .sidebar.is-open .sidebar-item:nth-child(1) .sidebar-text { transition-delay: 0.15s; }
+        .sidebar.is-open .sidebar-item:nth-child(2) .sidebar-text { transition-delay: 0.2s; }
+        .sidebar.is-open .sidebar-item:nth-child(3) .sidebar-text { transition-delay: 0.25s; }
+        .sidebar.is-open .sidebar-item:nth-child(4) .sidebar-text { transition-delay: 0.3s; }
+        .sidebar.is-open .sidebar-item:nth-child(5) .sidebar-text { transition-delay: 0.35s; }
+        .sidebar.is-open .sidebar-item:nth-child(6) .sidebar-text { transition-delay: 0.4s; }
+        .sidebar.is-open .sidebar-item:nth-child(7) .sidebar-text { transition-delay: 0.45s; }
+        .sidebar.is-open .sidebar-item:nth-child(8) .sidebar-text { transition-delay: 0.5s; }
+        .sidebar.is-open .sidebar-item:nth-child(9) .sidebar-text { transition-delay: 0.55s; }
+        .sidebar.is-open .sidebar-item:nth-child(10) .sidebar-text { transition-delay: 0.6s; }
+
+
+        /* --- Itens da Sidebar (Inalterado) --- */
+        .sidebar-item a {
+            border-left: 3px solid transparent; color: #adb5bd;
+            transition: all 0.2s ease-in-out; background-color: transparent;
+        }
+        .sidebar-item a .fa-fw { transition: transform 0.2s ease-in-out; }
+        .sidebar-item a:hover {
+            background-image: linear-gradient(90deg, var(--cor-secundaria) -75%, var(--sidebar-active-bg) 40%);
+            color: #ffffff; border-left-color: var(--cor-secundaria);
+        }
+        .sidebar-item a:hover .fa-fw { transform: scale(1.15) rotate(-7deg); }
+        .sidebar-item.active a {
+            background-image: linear-gradient(90deg, var(--cor-primaria) -75%, var(--sidebar-active-bg) 40%);
+            border-left-color: var(--cor-primaria);
+            color: var(--cor-primaria); font-weight: 600;
+        }
+
+        .logo-container {
+            /* width: var(--sidebar-expanded-width); */ /* <-- REMOVIDO */
+            text-decoration: none;
+            color: inherit;
+            transition: background-color 0.2s, justify-content 0.3s ease, padding 0.3s ease;
+            width: 100%; /* Garante que o container ocupe a largura da sidebar */
+            padding: 1.5rem; /* p-6 por padrão (desktop/mobile-aberto) */
+        }
+        .logo-container:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* --- Logo Link (#logo-link) --- */
+        #logo-link {
+            transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s, width 0.3s ease;
+            display: flex;
+        }
+        
+        /* --- Botão Toggle (#menu-toggle) --- */
+        #menu-toggle {
+            transition: transform 0.3s ease, margin 0.3s ease;
+            margin-right: 0; /* Padrão (mobile fechado) */
+        }
+
+        /* --- Lógica de Mobile (Abaixo de 768px) --- */
+        @media (max-width: 767px) {
+            #menu-toggle {
+                display: block;
+            }
+            /* 1. Sidebar FECHADA */
+            .sidebar:not(.is-open) .logo-container {
+                justify-content: center; /* Centraliza o botão */
+                padding: 1.5rem 0; /* [NOVO] p-6 (vertical), p-0 (horizontal) para centralizar */
+            }
+            .sidebar:not(.is-open) #logo-link {
+                opacity: 0;
+                transform: translateX(-20px);
+                pointer-events: none;
+                width: 0; /* Esconde e remove o espaço da logo */
+                margin-right: 0;
+            }
+            .sidebar:not(.is-open) #menu-toggle {
+                margin-right: 0; /* Botão não tem margem quando centralizado */
+            }
+
+            /* 2. Sidebar ABERTA */
+            .sidebar.is-open .logo-container {
+                justify-content: flex-start; /* Alinha à esquerda */
+                padding: 1.5rem; /* [NOVO] Devolve o p-6 normal */
+            }
+            .sidebar.is-open #logo-link {
+                opacity: 1;
+                transform: translateX(0);
+                pointer-events: auto;
+                width: auto; /* Devolve o espaço da logo */
+            }
+            .sidebar.is-open #menu-toggle {
+                margin-right: 1rem; /* Adiciona 'mr-4' (espaço) entre o botão e a logo */
+            }
+        }
+
+        /* --- Lógica de Desktop (Acima de 768px) --- */
+        @media (min-width: 768px) {
+            
+            /* ⬇️⬇️ SEÇÃO ADICIONADA ⬇️⬇️
+                Reativa o comportamento de hover APENAS no desktop
+                */
+
+            /* 1. Expande a barra no hover */
+            .sidebar:hover {
+                width: var(--sidebar-expanded-width);
+            }
+
+            /* 2. Mostra o texto no hover */
+            .sidebar:hover .sidebar-text {
+                opacity: 1;
+                transform: translateX(0);
+                transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+            }
+
+            /* 3. Adiciona o delay escalonado no hover */
+            .sidebar:hover .sidebar-item:nth-child(1) .sidebar-text { transition-delay: 0.15s; }
+            .sidebar:hover .sidebar-item:nth-child(2) .sidebar-text { transition-delay: 0.2s; }
+            .sidebar:hover .sidebar-item:nth-child(3) .sidebar-text { transition-delay: 0.25s; }
+            .sidebar:hover .sidebar-item:nth-child(4) .sidebar-text { transition-delay: 0.3s; }
+            .sidebar:hover .sidebar-item:nth-child(5) .sidebar-text { transition-delay: 0.35s; }
+            .sidebar:hover .sidebar-item:nth-child(6) .sidebar-text { transition-delay: 0.4s; }
+            .sidebar:hover .sidebar-item:nth-child(7) .sidebar-text { transition-delay: 0.45s; }
+            .sidebar:hover .sidebar-item:nth-child(8) .sidebar-text { transition-delay: 0.5s; }
+            .sidebar:hover .sidebar-item:nth-child(9) .sidebar-text { transition-delay: 0.55s; }
+            .sidebar:hover .sidebar-item:nth-child(10) .sidebar-text { transition-delay: 0.6s; }
+
+            /* --- Fim da seção adicionada --- */
+
+
+            /* Regras que você já tinha: */
+
+            /* 4. Esconde o botão hamburguer */
+            #menu-toggle {
+                display: none;
+            }
+            
+            /* 5. Garante que a logo esteja visível */
+            #logo-link {
+                opacity: 1;
+                transform: translateX(0);
+                pointer-events: auto;
+                width: auto;
+            }
+            
+            /* 6. Garante que o container esteja alinhado à esquerda e com padding */
+            .logo-container {
+                justify-content: flex-start;
+                padding: 1.5rem; /* [NOVO] Garante o p-6 no desktop */
+            }
+            
+            /* 7. Animação do logo (img) no hover */
+            .logo-container:hover img {
+                transform: scale(1.12) rotate(-5deg);
+            }
+        }
+        
+        .logo-container img {
+            transition: transform 0.3s ease-out;
+        }
+
+        @media (min-width: 768px) {
+            .logo-container:hover img {
+                transform: scale(1.12) rotate(-5deg);
+            }
+        }
+
+        /* --- ESTILOS DO CONTEÚDO PRINCIPAL (Corrigido) --- */
+        #main-content {
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+            overflow: hidden; 
+            flex: 1; 
+            min-width: 0; 
+            transition: all 0.3s ease-in-out;
+        }
+        #main-content::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5); /* Overlay escuro */
+            z-index: 1;
+        }
+        #main-content > .content-wrapper {
+            position: relative;
+            z-index: 2;
+            width: 100%;  
+            overflow-x: hidden; /* Mantém isso para evitar scroll horizontal */
+        }
+
+        /* ... Animações de Fade e HTMX (Inalteradas) ... */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .generic-fade-in {
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.2s forwards;
+        }
+
+        .htmx-fade-container {
+            opacity: 1;
+            transition: opacity 250ms ease-in-out;
+        }
+        /* O novo conteúdo, ao entrar, começa transparente */
+        .htmx-fade-container.htmx-settling {
+            opacity: 0;
+        }
+        /* O conteúdo antigo, ao sair, fica transparente */
+        .htmx-fade-container.htmx-swapping {
+            opacity: 0;
+        }
+        /* --- [FIM DA SEÇÃO MODIFICADA] --- */
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex min-h-screen">
+        
+        {% block sidebar %}
+        <aside id="sidebar" class="sidebar text-white flex-shrink-0 flex flex-col h-screen sticky top-0 z-20">
+            
+            <div class="logo-container flex items-center h-20"> 
+                <button id="menu-toggle" class="p-1 text-white"> 
+                    <i id="menu-toggle-icon" class="fas fa-bars fa-lg"></i>
+                </button>
+                <a href="{% url 'home' %}" id="logo-link" class="flex items-center">
+                    <img src="{% if configuracoes.logo and configuracoes.logo.url %}{{ configuracoes.logo.url }}{% else %}{% static 'images/logo.png' %}{% endif %}" alt="Logo" class="w-10 h-10 rounded-full mr-4 flex-shrink-0">
+                    <div class="sidebar-text">
+                        <p class="text-xs text-gray-400">Bem-vindo(a),</p>
+                        <p class="text-base font-semibold text-white -mt-1">{{ user.first_name|default:user.username }}</p>
+                    </div>
+                </a>
+            </div>
+        
+            <nav class="mt-4 flex-grow overflow-y-auto overflow-x-hidden min-h-0">
+                <ul id="menu-items" class="flex flex-col">
+                    {% if perms.cadastros.view_dashboard %}
+                    <li class="sidebar-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <a href="{% url 'home' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-tachometer-alt fa-fw w-6 mr-3"></i><span class="sidebar-text">Dashboard</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.cadastros.view_cliente %}
+                    <li class="sidebar-item {% if 'cliente' in request.resolver_match.url_name %}active{% endif %}">
+                        <a href="{% url 'listar_clientes' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-users fa-fw w-6 mr-3"></i><span class="sidebar-text">Clientes</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.cadastros.view_veiculo %}
+                    <li class="sidebar-item {% if 'veiculo' in request.resolver_match.url_name %}active{% endif %}">
+                        <a href="{% url 'listar_veiculos' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-car fa-fw w-6 mr-3"></i><span class="sidebar-text">Veículos</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.cadastros.view_ordemservico %}
+                    <li class="sidebar-item {% if 'ordem_servico_detalhe' in request.resolver_match.url_name or 'listar_ordens_servico' in request.resolver_match.url_name %}active{% endif %}">
+                        <a href="{% url 'listar_ordens_servico' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-comment-dots fa-fw w-6 mr-3"></i><span class="sidebar-text">Serviços</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.cadastros.view_peca %}
+                    <li class="sidebar-item {% if 'peca' in request.resolver_match.url_name %}active{% endif %}">
+                        <a href="{% url 'listar_pecas' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-box-open fa-fw w-6 mr-3"></i><span class="sidebar-text">Estoque</span>
+                        </a>
+                    </li>
+                    {% endif %}
+            
+                    {% if perms.auth.view_user or perms.auth.change_user or perms.cadastros.view_logatividade or perms.cadastros.change_configuracoesgerais %}
+                    <li class="my-4 border-t border-gray-700"></li>
+                    {% endif %}
+            
+                    {% if perms.auth.view_user %}
+                    <li class="sidebar-item {% if 'funcionario' in request.resolver_match.url_name %}active{% endif %}">
+                        <a href="{% url 'listar_funcionarios' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-user-tie fa-fw w-6 mr-3"></i><span class="sidebar-text">Gestão de Funcionários</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.auth.change_user %}
+                    <li class="sidebar-item {% if request.resolver_match.url_name == 'gerenciar_privilegios' %}active{% endif %}">
+                        <a href="{% url 'gerenciar_privilegios' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-key fa-fw w-6 mr-3"></i><span class="sidebar-text">Privilégios</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.cadastros.view_logatividade %}
+                    <li class="sidebar-item {% if request.resolver_match.url_name == 'listar_log_atividades' %}active{% endif %}">
+                        <a href="{% url 'listar_log_atividades' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-history fa-fw w-6 mr-3"></i><span class="sidebar-text">Log de Atividades</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if perms.cadastros.change_configuracoesgerais %}
+                    <li class="sidebar-item {% if request.resolver_match.url_name == 'configuracoes' %}active{% endif %}">
+                        <a href="{% url 'configuracoes' %}" class="flex items-center py-3 px-6 text-base">
+                            <i class="fas fa-cog fa-fw w-6 mr-3"></i><span class="sidebar-text">Configurações</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <div class="mt-auto flex-shrink-0 mb-4">
+                <ul class="flex flex-col">
+                    <li class="sidebar-item">
+                        <a href="{% url 'logout' %}" class="flex items-center py-3 px-6 text-base text-red-400 hover:text-white transition-colors duration-200 ease-in-out">
+                            <i class="fas fa-sign-out-alt fa-fw w-6 mr-3"></i>
+                            <span class="sidebar-text">Sair</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+        {% endblock sidebar %}
+        <div id="sidebar-overlay" class="fixed inset-0 z-10 bg-black/50 hidden md:hidden"></div>
+
+        <main id="main-content" class="flex-1 transition-all duration-300 ease-in-out" style="background-image: url('{% if configuracoes.imagem_fundo and configuracoes.imagem_fundo.url %}{{ configuracoes.imagem_fundo.url }}{% else %}{% static 'images/fundo site tcc.png' %}{% endif %}');">
+            
+            <div class="content-wrapper w-full p-4 sm:p-6 md:p-8 
+                {% if request.resolver_match.url_name != 'home' %} generic-fade-in transform {% else %} transform {% endif %}">
+
+                {% if messages %}
+                <div class="space-y-2 mb-6"> 
+                    {% for message in messages %}
+                        <div x-data="{ show: true }" x-show="show"
+                            x-transition:leave="transition ease-in duration-300"
+                            x-transition:leave-start="opacity-100 scale-100"
+                            x-transition:leave-end="opacity-0 scale-95"
+                            class="p-4 rounded-lg text-center shadow-lg border relative
+                                {% if message.tags == 'error' %} bg-red-600 bg-opacity-80 border-red-500/50 text-white 
+                                {% elif message.tags == 'success' %} bg-green-600 bg-opacity-80 border-green-500/50 text-white 
+                                {% else %} bg-blue-600 bg-opacity-80 border-blue-500/50 text-white 
+                                {% endif %}" 
+                            role="alert">
+                        
+                            <span>
+                                <i class="fas 
+                                        {% if message.tags == 'error' %}fa-exclamation-triangle
+                                        {% elif message.tags == 'success' %}fa-check-circle
+                                        {% else %}fa-info-circle
+                                        {% endif %} mr-2"></i>
+                                {{ message }}
+                            </span>
+
+                            <button @click="show = false" class="absolute top-0 right-0 p-4 leading-none text-white/70 hover:text-white transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}
+                    {# O conteúdo do template filho será inserido aqui #}
+                {% endblock %} 
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.getElementById('menu-toggle');
+            const menuIcon = document.getElementById('menu-toggle-icon');
+            const mainContent = document.getElementById('main-content');
+    
+            // ⬇️ 2. SELECIONE OS NOVOS ELEMENTOS ⬇️
+            const overlay = document.getElementById('sidebar-overlay');
+            const body = document.body;
+    
+            // 🚀 MELHORIA: Só executa o script da sidebar se a sidebar existir
+            // (Você já tem isso, mas agora inclui o 'overlay')
+            if (sidebar && menuToggle && menuIcon && mainContent && overlay) {
+    
+                // Função para fechar a sidebar
+                function closeSidebar() {
+                    sidebar.classList.remove('is-open');
+                    menuIcon.classList.remove('fa-times');
+                    menuIcon.classList.add('fa-bars');
+    
+                    // ⬇️ ATUALIZAÇÃO AQUI ⬇️
+                    overlay.classList.add('hidden'); // Esconde o overlay
+                    body.classList.remove('overflow-hidden'); // Desbloqueia a rolagem
+                }
+    
+                // Função para abrir a sidebar
+                function openSidebar() {
+                    sidebar.classList.add('is-open');
+                    menuIcon.classList.remove('fa-bars');
+                    menuIcon.classList.add('fa-times');
+    
+                    // ⬇️ ATUALIZAÇÃO AQUI ⬇️
+                    overlay.classList.remove('hidden'); // Mostra o overlay
+                    body.classList.add('overflow-hidden'); // Bloqueia a rolagem
+                }
+    
+                // Listener do Botão Toggle (Seu código original, inalterado)
+                menuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isOpen = sidebar.classList.contains('is-open');
+                    if (isOpen) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
+                    }
+                });
+    
+                // ⬇️ 3. MUDE O LISTENER DE 'mainContent' PARA 'overlay' ⬇️
+                // 🚀 MELHORIA MOBILE: Fecha a sidebar ao clicar no overlay
+                overlay.addEventListener('click', function() {
+                    if (sidebar.classList.contains('is-open')) {
+                        closeSidebar();
+                    }
+                });
+                
+            } // Fim do 'if (sidebar)'
+        });
+    </script>
+    
+    {% block extra_js %}
+        {# Bloco opcional para adicionar JavaScript específico da página filha #}
+    {% endblock %}
+</body>
+</html>

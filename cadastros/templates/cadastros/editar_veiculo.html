@@ -1,0 +1,87 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<style>
+    /* Estilização para todos os campos de formulário gerados pelo Django */
+    .form-style {
+        /* Garante que o input preencha a largura total do seu container */
+        @apply w-full bg-gray-800 border border-gray-700 rounded-xl py-3 px-4 text-white placeholder-gray-500 
+               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all;
+    }
+
+    /* Sobrescreve o estilo de erro, se houver */
+    .is-invalid {
+        @apply border-red-500 focus:ring-red-500;
+    }
+</style>
+
+<div class="flex items-center justify-center min-h-screen p-4 sm:p-8">
+    
+    <div class="w-full max-w-lg bg-gray-900/90 p-8 rounded-2xl shadow-2xl shadow-black/70 border border-gray-800 text-white">
+        
+        <div class="text-center mb-8">
+            <div class="inline-block bg-primary p-4 rounded-full mb-4">
+                <i class="fas fa-edit text-4xl text-white"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-white">Editar Veículo</h2>
+            <p class="text-gray-400 mt-2 text-lg font-medium">{{ veiculo.modelo }} - {{ veiculo.placa }}</p>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-xl text-sm font-medium mb-4">
+                    <p class="font-bold mb-1">Erro Geral:</p>
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for field in form %}
+                {% with is_error=field.errors %}
+                <div class="relative {% if forloop.first %}md:col-span-2{% endif %}">
+                    <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">
+                        {{ field.label }}
+                        {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+
+                    {{ field|add_class:"form-style" }}
+
+                    {% if is_error %}
+                        <div class="text-red-400 text-xs mt-1 font-medium">
+                            <i class="fas fa-exclamation-circle mr-1"></i> {{ field.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+
+            <div class="flex justify-end items-center gap-4 pt-4 border-t border-gray-800">
+                
+                <a href="{% url 'listar_veiculos' %}" 
+                   class="inline-flex items-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-xl hover:bg-gray-600 transition-all transform hover:scale-[1.03] shadow-md">
+                   <i class="fas fa-times mr-2"></i> Cancelar
+                </a>
+                
+                <button type="submit" 
+                    class="inline-flex items-center bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-[1.03]">
+                    <i class="fas fa-save mr-2"></i> Salvar Alterações
+                </button>
+            </div>
+        </form>
+        
+        <div class="mt-6 pt-4 border-t border-gray-800 text-center">
+            <a href="{% url 'excluir_veiculo' pk=veiculo.pk %}" class="text-red-500 hover:text-red-400 text-sm font-medium transition-colors">
+                <i class="fas fa-trash-alt mr-1"></i> Excluir este veículo
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

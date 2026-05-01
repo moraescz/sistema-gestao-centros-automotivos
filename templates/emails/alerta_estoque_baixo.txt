@@ -1,0 +1,20 @@
+ALERTA DE ESTOQUE BAIXO: {{ peca.nome }}
+
+Olá,
+
+Este é um alerta automático do sistema de gestão de estoque.
+
+A peça "{{ peca.nome }}" atingiu ou está abaixo do nível mínimo de reposição estabelecido.
+
+Resumo da Situação:
+- Estoque Atual: {{ peca.quantidade }} unidades
+- Estoque Mínimo: {{ peca.quantidade_minima }} unidades
+
+Por favor, inicie o processo de compra ou reposição o mais breve possível para evitar a falta deste item.
+
+Atenciosamente,
+Equipe do Sistema {{ configuracoes.nome_empresa|default:"" }}
+
+---
+Este e-mail é uma notificação automática. Não é necessário respondê-lo.
+Data do Alerta: {{ data_hora_alerta|date:"d/m/Y H:i" }}

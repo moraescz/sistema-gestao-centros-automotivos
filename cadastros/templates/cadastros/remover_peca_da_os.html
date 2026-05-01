@@ -1,0 +1,28 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-8 max-w-4xl mx-auto text-white">
+
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-4xl font-bold">Remover Peça da Ordem #{{ peca_utilizada.ordem_servico.pk }}</h1>
+        <a href="{% url 'ordem_servico_detalhe' pk=peca_utilizada.ordem_servico.pk %}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-lg">
+            Voltar
+        </a>
+    </div>
+
+    <div class="bg-black bg-opacity-50 rounded-xl shadow-lg p-6">
+        <p>Tem certeza que deseja remover a peça <strong>{{ peca_utilizada.peca.nome }}</strong> (Quantidade: {{ peca_utilizada.quantidade_utilizada }}) desta ordem de serviço?</p>
+        <form method="post" class="mt-4 flex gap-4 justify-end">
+            {% csrf_token %}
+            <a href="{% url 'ordem_servico_detalhe' pk=peca_utilizada.ordem_servico.pk %}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-lg">
+                Cancelar
+            </a>
+            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg">
+                Remover Peça
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

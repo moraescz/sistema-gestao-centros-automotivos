@@ -1,0 +1,516 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* ===== ANIMAÇÕES (dos dois arquivos) ===== */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* CSS do Arquivo 2 (Cartões Coloridos) */
+    .p-4.sm\:p-8 > h1 {
+        opacity: 0; 
+        animation: fadeIn 0.5s ease-out 0.1s forwards; 
+    }
+
+    /* CSS Adicionado do Arquivo 1 (para Alertas e Métricas) */
+    .alert-section {
+        opacity: 0;
+        animation: slideInRight 0.6s ease-out forwards;
+    }
+    .metric-section {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+    .metric-section:nth-of-type(1) { animation-delay: 0.8s; }
+    .metric-section:nth-of-type(2) { animation-delay: 0.9s; }
+
+    /* Classes de estilo das Métricas (do Arquivo 1) */
+    .metric-value {
+        font-size: 2.2rem; 
+        font-weight: 800;
+        line-height: 1;
+    }
+    .metric-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* CSS para os Gráficos (do Arquivo 2) */
+    .chart-card {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-out forwards; 
+    }
+    .chart-card:nth-of-type(1) { animation-delay: 1.0s; } 
+    .chart-card:nth-of-type(2) { animation-delay: 1.1s; } 
+    .chart-card:nth-of-type(3) { animation-delay: 1.2s; } 
+    .chart-card:nth-of-type(4) { animation-delay: 1.3s; } 
+
+    /* CSS para Logs (do Arquivo 1) */
+    .log-section {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-out forwards; 
+    }
+    .log-section:nth-of-type(1) { animation-delay: 1.4s; } 
+    .log-section:nth-of-type(2) { animation-delay: 1.5s; } 
+
+</style>
+
+<div class="p-3 sm:p-4 max-w-7xl mx-auto text-white space-y-6">
+
+    {% include 'cadastros/includes/alerta_estoque.html' %}
+
+    {% if alertas %}
+    <div class="alert-section">
+        <div class="bg-red-900/20 backdrop-blur-md rounded-xl p-6 border border-red-500/20">
+            <h3 class="text-lg font-semibold text-red-400 mb-4 flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Alertas do Sistema
+            </h3>
+            <div class="space-y-3">
+                {% for alerta in alertas %}
+                <div class="flex items-start p-4 rounded-lg bg-{{ alerta.tipo }}-900/20 border border-{{ alerta.tipo }}-500/30">
+                    <i class="fas {{ alerta.icone }} text-{{ alerta.tipo }}-400 mt-1 mr-3"></i>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-{{ alerta.tipo }}-400">{{ alerta.titulo }}</h4>
+                        <p class="text-gray-300 text-sm mt-1">{{ alerta.mensagem }}</p>
+                        {% if alerta.link %}
+                        <a href="{{ alerta.link }}" class="text-{{ alerta.tipo }}-400 hover:text-{{ alerta.tipo }}-300 text-sm underline mt-2 inline-block">
+                            Ver detalhes →
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h1 class="text-4xl sm:text-3xl font-extrabold text-white border-b-4 border-primary pb-2 mb-2 w-fit inline-flex items-center">
+            <i class="fas fa-chart-line mr-3 text-primary text-3xl"></i>
+            Dashboard
+        </h1>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a href="{% if perms.cadastros.view_cliente %}{% url 'listar_clientes' %}{% else %}#{% endif %}" class="block bg-green-600 rounded-lg p-4 shadow-lg transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2 hover:shadow-xl">
+            <div class="flex items-center justify-between"><div><p class="text-2xl font-extrabold">{{ total_clientes }}</p><p class="text-sm font-semibold">Clientes</p></div><i class="fas fa-users text-3xl opacity-50"></i></div>
+        </a>
+        
+        <a href="{% if perms.cadastros.view_veiculo %}{% url 'listar_veiculos' %}{% else %}#{% endif %}" class="block bg-red-600 rounded-lg p-4 shadow-lg transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2 hover:shadow-xl">
+            <div class="flex items-center justify-between"><div><p class="text-2xl font-extrabold">{{ total_veiculos }}</p><p class="text-sm font-semibold">Veículos</p></div><i class="fas fa-car text-3xl opacity-50"></i></div>
+        </a>
+    
+        <a href="{% if perms.cadastros.view_ordemservico %}{% url 'listar_ordens_servico' %}{% else %}#{% endif %}" class="block bg-teal-600 rounded-lg p-4 shadow-lg transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2 hover:shadow-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-2xl font-extrabold">{{ total_os }}</p>
+                    <p class="text-sm font-semibold">Total de OS</p>
+                </div>
+                <i class="fas fa-clipboard-list text-3xl opacity-50"></i> </div>
+        </a>
+        
+        <a href="{% if perms.cadastros.view_peca %}{% url 'listar_pecas' %}{% else %}#{% endif %}" class="block bg-purple-600 rounded-lg p-4 shadow-lg transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2 hover:shadow-xl">
+            <div class="flex items-center justify-between"><div><p class="text-2xl font-extrabold">{{ total_pecas_estoque }}</p><p class="text-sm font-semibold">Peças Cadastradas</p></div><i class="fas fa-box-open text-3xl opacity-50"></i></div>
+        </a>
+        
+        <a href="{% if perms.auth.view_user %}{% url 'listar_funcionarios' %}{% else %}#{% endif %}" class="block bg-orange-500 rounded-lg p-4 shadow-lg transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2 hover:shadow-xl">
+            <div class="flex items-center justify-between"><div><p class="text-2xl font-extrabold">{{ total_funcionarios }}</p><p class="text-sm font-semibold">Funcionários</p></div><i class="fas fa-user-tie text-3xl opacity-50"></i></div>
+        </a>
+        
+        <a href="{% if perms.auth.change_user %}{% url 'gerenciar_privilegios' %}{% else %}#{% endif %}" class="block bg-blue-800 rounded-lg p-4 shadow-lg transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2 hover:shadow-xl">
+            <div class="flex items-center justify-between"><div><p class="text-2xl font-extrabold"><i class="fas fa-key"></i></p><p class="text-sm font-semibold">Privilégios</p></div><i class="fas fa-shield-alt text-3xl opacity-50"></i></div>
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div class="metric-section bg-gray-800 bg-opacity-50 backdrop-blur-md rounded-xl shadow-lg p-4 border border-gray-700/50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="metric-label text-gray-400">Faturamento Mês</p>
+                    <p class="metric-value text-green-400">R$ {{ faturamento_mes_atual|floatformat:2 }}</p>
+                    {% if crescimento_mensal != 0 %}
+                    <p class="text-sm {% if crescimento_mensal > 0 %}text-green-400{% else %}text-red-400{% endif %} mt-1">
+                        {% if crescimento_mensal > 0 %}+{% endif %}{{ crescimento_mensal|floatformat:1 }}% vs mês anterior
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="bg-green-500/20 p-3 rounded-lg ml-2">
+                    <i class="fas fa-dollar-sign text-green-400 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-section bg-gray-800 bg-opacity-50 backdrop-blur-md rounded-xl shadow-lg p-4 border border-gray-700/50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="metric-label text-gray-400">Taxa de Conclusão</p>
+                    <p class="metric-value text-blue-400">{{ taxa_conclusao|floatformat:1 }}%</p>
+                    <p class="text-sm text-gray-400 mt-1">Últimos 30 dias</p>
+                </div>
+                <div class="bg-blue-500/20 p-3 rounded-lg ml-2">
+                    <i class="fas fa-chart-line text-blue-400 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-section bg-gray-800 bg-opacity-50 backdrop-blur-md rounded-xl shadow-lg p-4 border border-gray-700/50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="metric-label text-gray-400">OS em Aberto</p>
+                    <p class="metric-value text-yellow-400">{{ total_os_abertas }}</p>
+                    <p class="text-sm text-gray-400 mt-1">Ordens de Serviço</p>
+                </div>
+                <div class="bg-yellow-500/20 p-3 rounded-lg ml-2">
+                    <i class="fas fa-clock text-yellow-400 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="chart-card bg-gray-800 bg-opacity-50 backdrop-blur-md rounded-xl shadow-lg p-3 border border-gray-700/50">
+            <h2 class="text-base font-semibold text-gray-200 mb-4">Status das Ordens de Serviço</h2>
+            <div class="relative h-80"><canvas id="osStatusChart"></canvas></div>
+        </div>
+    
+        <div class="chart-card bg-gray-800 bg-opacity-50 backdrop-blur-md rounded-xl shadow-lg p-3 border border-gray-700/50">
+            <h2 class="text-base font-semibold text-gray-200 mb-4">OS Criadas por Mês</h2>
+            <div class="relative h-80"><canvas id="osPorMesChart"></canvas></div>
+        </div>
+    
+        <div class="chart-card bg-gray-800 bg-opacity-50 backdrop-blur-md rounded-xl shadow-lg p-3 border border-gray-700/50 md:col-span-2">
+            <h2 class="text-base font-semibold text-gray-200 mb-4">Top Peças Mais Utilizadas</h2>
+            <div class="relative h-80"><canvas id="topPecasChart"></canvas></div>
+        </div>
+    
+    </div>
+    
+
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+        <div class="log-section bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl p-5 border border-gray-700/60 flex flex-col">
+            <h3 class="text-lg font-bold text-gray-100 mb-5 flex items-center">
+                <i class="fas fa-history mr-3 text-primary text-xl"></i>
+                Últimas Ordens de Serviço
+            </h3>
+            
+            <div class="flex-1"> 
+                {% if ultimas_os %}
+                <div class="space-y-3">
+                    {% for os in ultimas_os %}
+                    
+                    <a href="{% url 'ordem_servico_detalhe' os.id %}" class="flex items-center justify-between p-4 bg-gray-900/60 hover:bg-gray-900 rounded-xl transition duration-200 border border-gray-700/40 hover:border-indigo-500/50 block group">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-extrabold text-primary text-base truncate group-hover:text-indigo-400 transition duration-200">OS #{{ os.id }}</p>
+                            <p class="text-sm text-gray-300 mt-0.5 truncate">{{ os.veiculo.cliente.nome|default:"Cliente Desconhecido" }} - <span class="text-gray-400 font-light">{{ os.veiculo.modelo|default:"Modelo Desconhecido" }}</span></p>
+                            <p class="text-xs text-gray-500 mt-1"><i class="far fa-calendar-alt mr-1"></i>{{ os.data_abertura|date:"d/m/Y" }}</p>
+                        </div>
+                        
+                        <div class="text-right ml-4 flex-shrink-0">
+                            <span class="px-3 py-1.5 text-xs font-semibold rounded-full min-w-[90px] text-center inline-block
+                                {% if os.finalizada %}
+                                    bg-green-600/30 text-green-300 border border-green-700
+                                {% else %}
+                                    bg-yellow-600/30 text-yellow-300 border border-yellow-700
+                                {% endif %}">
+                                {% if os.finalizada %}Finalizada{% else %}Em Aberto{% endif %}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="h-full flex items-center justify-center min-h-[150px]">
+                    <p class="text-gray-500 text-center py-4 flex items-center">
+                        <i class="fas fa-inbox mr-2 text-gray-600"></i> Nenhuma ordem de serviço encontrada.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    
+        <div class="log-section bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl p-5 border border-gray-700/60 flex flex-col">
+            <h3 class="text-lg font-bold text-gray-100 mb-5 flex items-center">
+                <i class="fas fa-list-alt mr-3 text-primary text-xl"></i>
+                Últimas Atividades
+            </h3>
+            
+            <div class="flex-1">
+                <div class="space-y-4 relative">
+                    
+                    {% for log in ultimos_logs|slice:":5" %}
+                    <div class="relative group">
+                        <div class="min-w-0 bg-gray-900/60 hover:bg-gray-900 rounded-xl p-4 border border-gray-700/40 transition duration-200">
+                            
+                            <div class="flex items-start space-x-3">
+                                
+                                <div class="flex-shrink-0 pt-1">
+                                    <div class="w-9 h-9 rounded-full flex items-center justify-center border-2 
+                                        {% if log.acao == "Criação" %}
+                                            bg-green-700/30 border-green-600/50 text-green-400
+                                        {% elif log.acao == "Edição" %}
+                                            bg-blue-700/30 border-blue-600/50 text-blue-400
+                                        {% elif log.acao == "Exclusão" %}
+                                            bg-red-700/30 border-red-600/50 text-red-400
+                                        {% else %}
+                                            bg-gray-700/30 border-gray-600/50 text-gray-400
+                                        {% endif %}">
+                                        {% if log.acao == "Criação" %}
+                                            <i class="fas fa-plus text-sm"></i>
+                                        {% elif log.acao == "Edição" %}
+                                            <i class="fas fa-pencil-alt text-sm"></i>
+                                        {% elif log.acao == "Exclusão" %}
+                                            <i class="fas fa-trash-alt text-sm"></i>
+                                        {% else %}
+                                            <i class="fas fa-user text-sm"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-semibold text-white truncate">{{ log.usuario.username|default:"Sistema" }}</p>
+                                            <p class="text-sm text-gray-300 mt-0.5">{{ log.detalhes }}</p>
+                                        </div>
+                                        
+                                        <div class="self-center ml-4 flex-shrink-0">
+                                            <span class="px-2 py-0.5 text-xs font-medium rounded-md
+                                                {% if log.acao == "Criação" %}
+                                                    text-green-300 bg-green-500/20
+                                                {% elif log.acao == "Edição" %}
+                                                    text-blue-300 bg-blue-500/20
+                                                {% elif log.acao == "Exclusão" %}
+                                                    text-red-300 bg-red-500/20
+                                                {% else %}
+                                                    text-gray-300 bg-gray-500/20
+                                                {% endif %}">
+                                                {{ log.acao }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1"><i class="far fa-clock mr-1"></i> {{ log.data_hora|date:"d/m/Y H:i" }}</p>
+                                </div>
+                            </div> 
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if not ultimos_logs %}
+                    <div class="h-full flex items-center justify-center min-h-[150px]">
+                        <p class="text-gray-500 text-center py-4 flex items-center">
+                            <i class="fas fa-clipboard-list mr-2 text-gray-600"></i> Nenhuma atividade registrada.
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+
+<script>
+    // Função para disparar animações
+    function triggerAnimations() {
+        // Apenas garante que os elementos que começam com opacidade 0 tenham a animação ativada
+        const animatedElements = document.querySelectorAll('.dashboard-card, .metric-section, .chart-card, .log-section, .alert-section');
+        animatedElements.forEach((el) => {
+            // Remove a opacidade 0 inicial (se estiver em HTML) e adiciona a classe de animação
+            el.style.opacity = '1';
+            el.style.animation = 'fadeIn 0.5s ease-out forwards';
+        });
+    }
+
+    // Disparar animações no carregamento da página
+    document.addEventListener('DOMContentLoaded', triggerAnimations);
+
+    // Disparar animações após swap do HTMX (se estiver usando HTMX para navegação)
+    document.addEventListener('htmx:afterSwap', triggerAnimations);
+
+    // JAVASCRIPT (do Arquivo 2)
+    if (typeof Chart !== 'undefined') {
+
+        // --- CONFIGURAÇÕES GLOBAIS E CORES ---
+        Chart.defaults.color = '#9ca3af'; 
+        Chart.defaults.font.family = 'Inter, sans-serif';
+        Chart.defaults.font.size = 12; 
+        Chart.defaults.layout.padding = 10;
+
+        const colors = {
+            primary: 'rgba(59, 130, 246, 1)',
+            primaryLight: 'rgba(59, 130, 246, 0.2)',
+            secondary: 'rgba(34, 197, 94, 1)',
+            secondaryLight: 'rgba(34, 197, 94, 0.2)',
+            warning: 'rgba(251, 191, 36, 1)',
+            warningLight: 'rgba(251, 191, 36, 0.7)',
+            danger: 'rgba(239, 68, 68, 1)',
+            grid: 'rgba(255, 255, 255, 0.1)',
+            tooltipBg: 'rgba(17, 24, 39, 0.8)'
+        };
+
+        const tooltipConfig = {
+            enabled: true,
+            backgroundColor: colors.tooltipBg,
+            titleColor: '#e5e7eb',
+            titleFont: { weight: 'bold', size: 13 },
+            bodyColor: '#d1d5db',
+            bodyFont: { size: 11 },
+            padding: 10,
+            cornerRadius: 8,
+            boxPadding: 4,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            displayColors: true
+        };
+
+        // --- GRÁFICO 1: STATUS OS ---
+        const osStatusCtx = document.getElementById('osStatusChart');
+        if (osStatusCtx) {
+            new Chart(osStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ labels_os_json|safe }},
+                    datasets: [{
+                        label: 'Nº de Ordens',
+                        data: {{ data_os_json|safe }},
+                        backgroundColor: [
+                            colors.warning,
+                            colors.primary,
+                            colors.danger,
+                            colors.secondary
+                        ],
+                        borderColor: '#2d3748',
+                        borderWidth: 2,
+                        hoverOffset: 8 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                color: '#9ca3af',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 14 },
+                                padding: 20
+                            }
+                        },
+                        tooltip: tooltipConfig
+                    }
+                }
+            });
+        }
+
+
+        // --- Variáveis de dados ---
+        const labelsOsCriadas = {{ labels_os_criadas_json|safe }};
+        const dataOsCriadas = {{ data_os_criadas_json|safe }};
+        const labelsTopPecas = {{ labels_top_pecas_json|safe }};
+        const dataTopPecas = {{ data_top_pecas_json|safe }};
+
+        // --- GRÁFICO 3: OS CRIADAS POR MÊS ---
+        const osPorMesCtx = document.getElementById('osPorMesChart');
+        if (osPorMesCtx) {
+            const ctx = osPorMesCtx.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(168, 85, 247, 0.7)'); 
+            gradient.addColorStop(1, 'rgba(168, 85, 247, 0.1)');
+
+            new Chart(osPorMesCtx, {
+                type: 'bar',
+                data: {
+                    labels: labelsOsCriadas,
+                    datasets: [{
+                        label: 'OS Criadas',
+                        data: dataOsCriadas,
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(168, 85, 247, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: 'rgba(168, 85, 247, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: colors.grid, drawBorder: false },
+                            ticks: { precision: 0 }
+                        },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: tooltipConfig
+                    }
+                }
+            });
+        }
+
+        // --- GRÁFICO 4: TOP PEÇAS ---
+        const topPecasCtx = document.getElementById('topPecasChart');
+        if (topPecasCtx) {
+            const ctx = topPecasCtx.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 300, 0);
+            gradient.addColorStop(0, 'rgba(234, 88, 12, 0.7)'); 
+            gradient.addColorStop(1, 'rgba(234, 88, 12, 0.1)');
+
+            new Chart(topPecasCtx, {
+                type: 'bar',
+                data: {
+                    labels: labelsTopPecas,
+                    datasets: [{
+                        label: 'Quantidade Utilizada',
+                        data: dataTopPecas,
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(234, 88, 12, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: 'rgba(234, 88, 12, 1)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Gráfico horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { // Eixo de valor é o X
+                            beginAtZero: true,
+                            grid: { color: colors.grid, drawBorder: false },
+                            ticks: { precision: 0 }
+                        },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: tooltipConfig
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

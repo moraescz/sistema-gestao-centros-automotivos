@@ -1,0 +1,193 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load l10n %}  {# 1. ADICIONADO: Carrega o módulo de localização #}
+
+{% block content %}
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.6s ease-out forwards;
+    }
+    .animate-slide-up {
+        animation: slideUp 0.8s ease-out forwards;
+    }
+    /* Adicionando delays para os blocos */
+    .animate-delay-1 { animation-delay: 0.2s; }
+    .animate-delay-2 { animation-delay: 0.4s; }
+    .animate-delay-3 { animation-delay: 0.6s; }
+</style>
+
+<div class="p-4 sm:p-8 max-w-7xl mx-auto text-white space-y-8">
+
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="animate-fade-in">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white flex items-center border-b-4 border-primary pb-2 mb-2 w-fit">
+                <i class="fas fa-history text-primary mr-3"></i> Histórico do Veículo
+            </h1>
+            <p class="text-gray-400 mt-2 text-lg font-medium">
+                {{ veiculo.modelo }} <span class="text-primary">|</span> Placa: {{ veiculo.placa }}
+            </p>
+        </div>
+        <div class="flex items-center gap-3 animate-fade-in" style="animation-delay: 0.1s;">
+            <a href="{% url 'listar_veiculos' %}" 
+                class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg
+                        transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                <i class="fas fa-arrow-left"></i>
+                <span class="hidden sm:inline">Voltar</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 md:p-8 animate-slide-up animate-delay-1">
+            <h3 class="text-xl font-bold text-white pb-3 mb-4 border-b border-gray-700 flex items-center gap-3">
+                <i class="fas fa-car-side text-2xl text-primary"></i>
+                <span>Dados do Veículo</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">Modelo</label>
+                    <p class="mt-1 text-lg font-semibold text-white">{{ veiculo.modelo }}</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">Placa</label>
+                    <p class="mt-1 text-lg font-semibold text-white">{{ veiculo.placa }}</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">Ano</label>
+                    <p class="mt-1 text-lg font-semibold text-white">{{ veiculo.ano|stringformat:"d" }}</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">Cor</label>
+                    <p class="mt-1 text-lg font-semibold text-white">{{ veiculo.cor|default:"N/A" }}</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-400">Cliente</label>
+                    <p class="mt-1 text-lg font-semibold text-white hover:text-blue-400 transition-colors">
+                        {% if veiculo.cliente %}
+                            <a href="{% url 'cliente_detalhe' pk=veiculo.cliente.pk %}">{{ veiculo.cliente.nome }}</a>
+                        {% else %}
+                            Não Vinculado
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 md:p-8 animate-slide-up animate-delay-2">
+            <h3 class="text-xl font-bold text-white pb-3 mb-4 border-b border-gray-700 flex items-center gap-3">
+                <i class="fas fa-chart-line text-2xl text-primary"></i>
+                <span>Estatísticas da OS</span>
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">Total de OS</label>
+                    <p class="mt-1 text-2xl font-bold text-white">{{ total_os }}</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">OS Finalizadas</label>
+                    <p class="mt-1 text-xl font-bold text-green-400">{{ os_finalizadas }}</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">OS Aguardando</label>
+                    <p class="mt-1 text-xl font-bold text-yellow-400">{{ os_aguardando }}</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">OS Aprovadas</label>
+                    <p class="mt-1 text-xl font-bold text-blue-400">{{ os_aprovadas }}</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <label class="block text-sm font-medium text-gray-400">OS Reprovadas</label>
+                    <p class="mt-1 text-xl font-bold text-red-400">{{ os_reprovadas }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden animate-slide-up animate-delay-3">
+        <div class="p-6 border-b border-gray-700">
+            <h2 class="text-2xl font-bold text-white flex items-center">
+                <i class="fas fa-list-alt mr-2 text-primary"></i> Ordens de Serviço
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            {% if ordens_servico %}
+            <table class="w-full text-sm text-left text-gray-300">
+                <thead class="text-xs text-gray-200 uppercase tracking-wider border-b-2 border-gray-600 bg-gradient-to-r from-gray-700/60 to-gray-800/60">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-semibold"><i class="fas fa-hashtag text-primary mr-2"></i>OS</th>
+                        <th scope="col" class="px-6 py-4 font-semibold"><i class="fas fa-calendar-alt text-primary mr-2"></i>Data Abertura</th>
+                        <th scope="col" class="px-6 py-4 font-semibold"><i class="fas fa-info-circle text-primary mr-2"></i>Status</th>
+                        <th scope="col" class="px-6 py-4 font-semibold hidden md:table-cell"><i class="fas fa-comment-alt text-primary mr-2"></i>Descrição</th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-center"><i class="fas fa-cogs text-primary mr-2"></i>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ordem in ordens_servico %}
+                    <tr class="bg-gray-900/50 transition-all duration-300 hover:bg-gray-700/60 hover:shadow-lg border-b border-gray-700/50 group">
+                        <td class="px-6 py-4 font-bold text-primary">{{ ordem.pk }}</td>
+                        <td class="px-6 py-4">{{ ordem.data_abertura|date:"d/m/Y" }}</td>
+                        <td class="px-6 py-4">
+                            {% if ordem.status_aprovacao == 'AGUARDANDO' %}
+                                <span class="inline-flex items-center px-3 py-1 text-xs font-bold leading-tight rounded-full shadow-lg bg-gradient-to-r from-yellow-500 to-orange-500 text-yellow-900">AGUARDANDO</span>
+                            {% elif ordem.status_aprovacao == 'REPROVADO' %}
+                                <span class="inline-flex items-center px-3 py-1 text-xs font-bold leading-tight rounded-full shadow-lg bg-gradient-to-r from-red-500 to-red-600 text-red-100">REPROVADO</span>
+                            {% elif ordem.status_aprovacao == 'APROVADO' %}
+                                {% if ordem.finalizada %}
+                                    <span class="inline-flex items-center px-3 py-1 text-xs font-bold leading-tight rounded-full shadow-lg bg-gradient-to-r from-green-500 to-green-600 text-green-100">FINALIZADA</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-3 py-1 text-xs font-bold leading-tight rounded-full shadow-lg bg-gradient-to-r from-blue-500 to-blue-600 text-blue-100">APROVADO</span>
+                                {% endif %}
+                            {% elif ordem.status_aprovacao == 'FINALIZADO' %}
+                                <span class="inline-flex items-center px-3 py-1 text-xs font-bold leading-tight rounded-full shadow-lg bg-gradient-to-r from-green-500 to-green-600 text-green-100">FINALIZADA</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 hidden md:table-cell text-gray-400">{{ ordem.descricao|truncatechars:50 }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center space-x-2 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                <a href="{% url 'ordem_servico_detalhe' ordem.pk %}" 
+                                    class="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-200 transform hover:scale-110" 
+                                    title="Ver Detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'gerar_os_pdf' ordem.pk %}" target="_blank" 
+                                    class="p-2 text-gray-400 hover:text-green-400 hover:bg-green-500/20 rounded-lg transition-all duration-200 transform hover:scale-110" 
+                                    title="Gerar PDF">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center py-16 px-4">
+                <div class="w-24 h-24 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-clipboard-list text-4xl text-gray-500"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-300 mb-2">Sem Histórico de Ordens de Serviço</h3>
+                <p class="text-gray-500 mb-6">
+                    Nenhuma ordem de serviço foi registrada para este veículo ainda.
+                </p>
+                {% if perms.cadastros.add_ordem_servico %}
+                <a href="{% url 'cadastrar_ordem_servico' %}?cliente_id={{ cliente.pk }}" 
+                class="inline-flex items-center gap-2 bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <i class="fas fa-plus"></i> Cadastrar Primeira OS
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

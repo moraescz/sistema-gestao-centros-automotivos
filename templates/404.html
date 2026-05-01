@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Não Encontrada - Centro Automotivo</title>
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: url('{% static 'images/fundo site tcc.png' %}');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        /* ⭐ MELHORIA: Botões reestilizados para um tema de "Erro" 
+        */
+        .btn-primary {
+            /* Fundo vermelho para a ação principal */
+            background-color: #DC2626; /* bg-red-600 */
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #B91C1C; /* bg-red-700 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Botão "fantasma" para a ação secundária */
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid #6B7280; /* border-gray-500 */
+            color: #D1D5DB; /* text-gray-300 */
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #4B5563; /* bg-gray-600 */
+            border-color: #4B5563;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Animação de Fade (Existente) */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        /* ⭐ MELHORIA: Animação Glitch removida e substituída por um Pulso 
+        */
+        @keyframes pulse {
+             0%, 100% { 
+                opacity: 1; 
+                transform: scale(1);
+            }
+             50% { 
+                opacity: 0.8; 
+                transform: scale(1.05);
+            }
+        }
+        .animate-pulse-icon {
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+    <div class="overlay absolute inset-0"></div>
+    <div class="relative z-10 max-w-md w-full mx-4 text-center fade-in">
+        
+        <div class="bg-gray-800 bg-opacity-90 rounded-2xl p-8 shadow-2xl border border-gray-700">
+            
+            <div class="mb-6">
+                <i class="fas fa-exclamation-triangle text-6xl text-red-500 animate-pulse-icon"></i>
+            </div>
+
+            <h1 class="text-9xl font-black text-white mb-4 tracking-tighter">404</h1>
+
+            <h2 class="text-2xl font-semibold text-gray-300 mb-4">Página Não Encontrada</h2>
+            <p class="text-gray-400 mb-8 leading-relaxed">
+                Ops! A página que você está procurando não existe ou foi movida.
+                Verifique o endereço ou volte para navegar pelo sistema.
+            </p>
+
+            <div class="space-y-4">
+                <a href="{% url 'home' %}" class="btn-primary inline-block w-full py-3 px-6 rounded-lg font-semibold text-center">
+                    <i class="fas fa-home mr-2"></i> Voltar ao Início
+                </a>
+                <button onclick="history.back()" class="btn-secondary inline-block w-full py-3 px-6 rounded-lg font-semibold text-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Voltar à Página Anterior
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

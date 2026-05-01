@@ -1,0 +1,227 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<style>
+    /* Estilos dos inputs (idêntico ao do Cliente) */
+    .form-style {
+        @apply w-full bg-gray-800 border border-gray-700 rounded-xl py-3 px-4 text-white placeholder-gray-500 
+               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all;
+    }
+
+    .is-invalid {
+        @apply border-red-500 focus:ring-red-500;
+    }
+    /* Oculta input file padrão - NÃO NECESSÁRIO se forms.py já faz, mas mantido por segurança */
+    .hidden-file-input {
+        opacity: 0;
+        position: absolute;
+        z-index: -1;
+        width: 0.1px;
+        height: 0.1px;
+    }
+    
+    /* Adiciona a definição de bg-primary para garantir que funcione se não estiver no base.html */
+    .bg-primary { background-color: var(--cor-primaria, #0d6efd); } /* Usa variável CSS ou fallback */
+
+    /* Classes de segurança para Tailwind */
+    .bg-blue-600, .hover\:bg-blue-700, .shadow-blue-900\/50 {}
+    .bg-red-600, .hover\:bg-red-700, .shadow-red-900\/50 {}
+    .bg-green-600, .hover\:bg-green-700, .shadow-green-900\/50 {}
+    .bg-indigo-600, .hover\:bg-indigo-700, .shadow-indigo-900\/50 {}
+</style>
+
+<!-- Container principal centralizado -->
+<div class="flex items-center justify-center min-h-screen p-4 sm:p-8">
+    
+    <!-- Card principal -->
+    <div class="w-full max-w-3xl bg-gray-900/90 p-8 rounded-2xl shadow-2xl shadow-black/70 border border-gray-800 text-white">
+        
+        <!-- Cabeçalho -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-primary p-4 rounded-full mb-4">
+                <i class="fas fa-box-open text-4xl text-white"></i> 
+            </div>
+            <h1 class="text-3xl font-extrabold text-white">
+                {% if form.instance.pk %}
+                    Editar Peça: <span class="text-primary">{{ form.instance.nome }}</span>
+                {% else %}
+                    Adicionar Nova Peça ao Estoque
+                {% endif %}
+            </h1>
+            <p class="text-gray-400 mt-2">Preencha os dados abaixo para gerenciar o item.</p>
+        </div>
+
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Grid Principal -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- Coluna de Campos (2/3) -->
+                <div class="md:col-span-2 space-y-6">
+    
+                    {% with field=form.nome %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ field.label }}</label>
+                        {{ field|add_class:"form-style"|add_error_class:"is-invalid"|attr:"placeholder:Nome da Peça..." }}
+                        {% if field.errors %}<div class="text-red-400 text-xs mt-1 font-medium flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ field.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% endwith %}
+                
+                    {% with field=form.aplicacao %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ field.label }}</label>
+                        {{ field|add_class:"form-style"|add_error_class:"is-invalid"|attr:"placeholder:Ex: VW Gol, Ford Ka..." }}
+                        {% if field.errors %}<div class="text-red-400 text-xs mt-1 font-medium flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ field.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% endwith %}
+                
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-gray-800">
+                        
+                        {% with field=form.quantidade %}
+                        <div>
+                            <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ field.label }}</label>
+                            {{ field|add_class:"form-style"|add_error_class:"is-invalid"|attr:"placeholder:10" }}
+                            {% if field.errors %}<div class="text-red-400 text-xs mt-1 font-medium flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ field.errors.0 }}</div>{% endif %}
+                        </div>
+                        {% endwith %}
+                
+                        {% with field=form.valor_unitario %}
+                        <div>
+                            <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ field.label }}</label>
+                            {{ field|add_class:"form-style"|add_error_class:"is-invalid"|attr:"placeholder:150,00" }}
+                            {% if field.errors %}<div class="text-red-400 text-xs mt-1 font-medium flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ field.errors.0 }}</div>{% endif %}
+                        </div>
+                        {% endwith %}
+                        
+                        {% with field=form.quantidade_minima %}
+                        <div>
+                            <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ field.label }}</label>
+                            {{ field|add_class:"form-style"|add_error_class:"is-invalid"|attr:"placeholder:5" }}
+                            {% if field.errors %}<div class="text-red-400 text-xs mt-1 font-medium flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> {{ field.errors.0 }}</div>{% endif %}
+                        </div>
+                        {% endwith %}
+                    </div>
+                
+                </div>
+
+                <!-- Coluna da Imagem (1/3) -->
+                <div class="md:col-span-1 space-y-4 flex flex-col items-center pt-2 md:pt-0 border-t md:border-t-0 border-gray-800"> 
+                    <h2 class="block text-lg font-semibold text-gray-200 w-full text-center">Imagem da Peça</h2>
+                    
+                    <div id="image-display-area" class="w-full flex flex-col items-center">
+                        {% if form.instance.imagem and form.instance.imagem.url %}
+                            <div id="current-image-container" class="mb-4 relative w-40 h-40 p-1 bg-gray-700/50 rounded-xl border border-gray-700 flex items-center justify-center shadow-lg">
+                                <img src="{{ form.instance.imagem.url }}" alt="Imagem atual" class="h-full w-full object-cover rounded-lg">
+                                <a href="{% url 'remover_imagem_peca' form.instance.pk %}" 
+                                   class="absolute top-2 right-2 h-7 w-7 flex items-center justify-center rounded-full text-white bg-red-600 hover:bg-red-700 transition-colors text-sm"
+                                   title="Remover Imagem">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        <div id="image-preview-container" class="mt-2 hidden w-full text-center">
+                            <p class="text-xs text-gray-400 mb-2 text-center">Pré-visualização da nova imagem:</p>
+                            <div class="border-2 border-dashed border-gray-700 p-2 rounded-xl inline-block mx-auto">
+                                <img id="image-preview" src="#" alt="Preview da nova imagem" class="h-32 w-32 object-cover rounded-lg">
+                            </div>
+                        </div>
+
+                        <span id="file-upload-filename" class="text-sm text-gray-400 max-w-full truncate px-2 text-center mt-2">
+                            {% if form.instance.imagem %}Arquivo atual: {{ form.instance.imagem.name|cut:"pecas/" }}{% else %}Nenhum arquivo escolhido{% endif %}
+                        </span>
+                    </div>
+                    
+                    <!-- Botão de Upload -->
+                    <label for="{{ form.imagem.id_for_label }}" class="cursor-pointer inline-flex items-center justify-center gap-2 bg-primary hover:bg-opacity-85 text-white font-semibold w-full py-3 px-5 rounded-xl shadow-md transform hover:scale-[1.01] transition-all duration-200">
+                        <i class="fas fa-upload mr-1"></i>
+                        {% if form.instance.imagem %}Alterar Imagem{% else %}Selecionar Arquivo{% endif %}
+                    </label>
+                    
+                    <div class="hidden">
+                        {{ form.imagem }} 
+                    </div>
+                    
+                    {% if form.imagem.errors %}
+                        <div class="text-red-400 text-sm mt-2 font-medium flex items-center gap-1 text-center">
+                            <i class="fas fa-exclamation-circle"></i> {{ form.imagem.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <!-- FIM DA ALTERAÇÃO -->
+                </div>
+
+            </div> <!-- Fim do Grid Principal -->
+            
+            <!-- BOTÕES DE AÇÃO -->
+            <div class="flex justify-end gap-4 pt-4 border-t border-gray-800">
+                <a href="{% url 'listar_pecas' %}" 
+                   class="inline-flex items-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-xl hover:bg-gray-600 transition-all transform hover:scale-[1.03] shadow-md">
+                   <i class="fas fa-times mr-2"></i> Cancelar
+                </a>
+                
+                <!-- Botão Salvar -->
+                <button type="submit" 
+                        class="inline-flex items-center bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-[1.03]">
+                    <i class="fas fa-check mr-2"></i> 
+                    {% if form.instance.pk %}
+                        Salvar Alterações
+                    {% else %}
+                        Cadastrar Peça
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    const fileInput = document.getElementById('{{ form.imagem.id_for_label }}');
+    const fileNameSpan = document.getElementById('file-upload-filename');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const currentImageContainer = document.getElementById('current-image-container'); 
+    
+    // Define o texto inicial com base no estado do formulário.
+    // Garante que o span exista antes de tentar ler seu conteúdo
+    let initialFileNameText = fileNameSpan ? fileNameSpan.textContent.trim() : 'Nenhum arquivo escolhido';
+
+    fileInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        
+        if (file) {
+            let fileName = file.name;
+            // Truncate file name for display if too long
+            if (fileName.length > 30) {
+                fileName = fileName.substring(0, 15) + '...' + fileName.substring(fileName.length - 10);
+            }
+            fileNameSpan.textContent = "Novo arquivo: " + fileName; 
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.setAttribute('src', e.target.result);
+                imagePreviewContainer.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+
+            // Hide current image when a new one is selected
+            if (currentImageContainer) {
+                currentImageContainer.classList.add('hidden');
+            }
+
+        } else {
+            // Restore initial state if file is cleared
+            fileNameSpan.textContent = initialFileNameText; 
+            imagePreview.setAttribute('src', '#');
+            imagePreviewContainer.classList.add('hidden');
+
+            // Show current image again if selection is cleared
+            if (currentImageContainer) {
+                currentImageContainer.classList.remove('hidden');
+            }
+        }
+    });
+</script>
+{% endblock %}

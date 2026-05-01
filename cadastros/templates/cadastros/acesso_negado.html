@@ -1,0 +1,196 @@
+    {% extends 'cadastros/base.html' %}
+    {% load static %}
+
+    {% block extra_css %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <style>
+        /* ... (Suas animações 'float', 'pulse-border', 'glitch' permanecem aqui) ... */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes pulse-border {
+            0%, 100% {
+                box-shadow: 0 0 20px 5px rgba(239, 68, 68, 0.2), 0 0 0 0 rgba(239, 68, 68, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 35px 10px rgba(239, 68, 68, 0), 0 0 0 5px rgba(239, 68, 68, 0.4);
+            }
+        }
+        @keyframes glitch {
+            2%,64%{ transform: translate(2px,0) skew(0deg); }
+            4%,60%{ transform: translate(-2px,0) skew(0deg); }
+            62%{ transform: translate(0,0) skew(5deg); }
+        }
+
+        .animate-float { animation: float 4s ease-in-out infinite; }
+        .animate-pulse-border { animation: pulse-border 3s ease-in-out infinite; }
+        .glitch-text { animation: glitch 1s linear infinite; }
+
+        /* Estilos do Select2 (Tema Escuro) */
+        .select2-container--default .select2-selection--single {
+            background-color: #1f2937 !important; /* bg-gray-800 */
+            border: 1px solid #374151 !important; /* border-gray-700 */
+            
+            /* ⭐ MELHORIA: Borda arredondada completa (rounded-lg) ⭐ */
+            border-radius: 0.5rem !important; 
+            
+            height: calc(2.8rem + 2px) !important; /* Altura personalizada */
+            padding: 0.65rem 0.75rem !important;
+            line-height: 1.5rem !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: white !important;
+            padding-left: 0 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #9ca3af !important; /* gray-400 placeholder */
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: calc(2.8rem + 2px) !important;
+            right: 0.75rem !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #9ca3af transparent transparent transparent !important;
+        }
+        .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent #9ca3af transparent !important;
+        }
+        .select2-dropdown {
+            background-color: #111827 !important; /* bg-gray-900 */
+            border: 1px solid #374151 !important; /* border-gray-700 */ 
+            border-radius: 0.5rem !important;
+            color: white !important;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--cor-primaria, #2563eb) !important;
+        }
+    </style>
+    {% endblock extra_css %}
+
+
+    {% block sidebar %}
+        {% endblock sidebar %}
+
+
+        {% block content %}
+        <div class="flex items-center justify-center min-h-[calc(100vh-10rem)] text-white"> 
+            
+            <div class="text-center bg-black bg-opacity-80 p-6 sm:p-10 rounded-2xl shadow-2xl border border-red-500/50 max-w-lg w-full mx-4 animate-pulse-border">
+                
+                <div class="mx-auto mb-6 h-16 w-16 sm:h-20 sm:w-20 text-red-500 animate-float">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                
+                <p class="text-6xl sm:text-8xl font-black text-red-500 opacity-30 tracking-widest relative">
+                    <span class="glitch-text">403</span>
+                </p>
+                <h1 class="text-2xl sm:text-3xl font-bold mt-2 text-white">Acesso Negado</h1>
+                <p class="text-gray-300 mt-4 mb-6 text-sm sm:text-base">
+                    Você não possui as permissões necessárias para acessar a página solicitada.
+                </p>
+                <p class="text-xs text-gray-500 mb-8">
+                    Se você acredita que isso é um erro, entre em contato com o administrador.
+                </p>
+                
+                <div class="mt-8 space-y-4">
+                    {% if user.is_authenticated %}
+        
+                        {% if perms.cadastros.add_cliente or perms.cadastros.add_veiculo or perms.cadastros.add_servico or perms.cadastros.add_funcionario %}
+                            
+                            <div class="border-t border-gray-700 pt-6">
+                                <label for="quick_nav" class="block mb-2 text-sm font-medium text-gray-400 text-left">
+                                    Acesso Rápido:
+                                </label>
+                    
+                                <div class="flex items-center">
+                                    <select id="quick_nav" class="block w-full">
+                                        <option value=""></option>
+                                        <optgroup>
+                                            {% if perms.cadastros.view_dashboard %}
+                                                <option value="{% url 'home' %}">Dashboard</option>
+                                            {% endif %}
+                                            
+                                            {% if perms.cadastros.view_ordemservico %}
+                                                <option value="{% url 'listar_ordens_servico' %}">Ordens de Serviço</option>
+                                            {% endif %}
+                                        
+                                            {% if perms.cadastros.view_cliente %}
+                                                <option value="{% url 'listar_clientes' %}">Clientes</option>
+                                            {% endif %}
+                                        
+                                            {% if perms.cadastros.view_veiculo %}
+                                                <option value="{% url 'listar_veiculos' %}">Veículos</option>
+                                            {% endif %}
+                                        
+                                            {% if perms.cadastros.view_peca %}
+                                                <option value="{% url 'listar_pecas' %}">Peças</option>
+                                            {% endif %}
+                                        
+                                            {% if perms.cadastros.view_funcionario %}
+                                                <option value="{% url 'listar_funcionarios' %}">Funcionários</option>
+                                            {% endif %}
+                                        </optgroup>
+                                    </select>
+                                    
+                                    </div>
+                            </div>
+                        {% endif %}
+        
+                        <a href="javascript:history.back()"
+                        class="inline-flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg w-full text-base">
+                            <i class="fas fa-arrow-left fa-fw"></i>
+                            Voltar
+                        </a>
+                
+                    {% else %}
+                        <a href="{% url 'login' %}"
+                        class="inline-flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-5 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-gray-500/30 focus:outline-none focus:ring-4 focus:ring-gray-500/50 w-full">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
+                            </svg>
+                            Ir para Login
+                        </a>
+                    {% endif %}
+                </div>
+                
+            </div>
+        </div>
+        {% endblock content %}
+
+
+    {% block extra_js %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var $select = $('#quick_nav');
+
+            $select.select2({
+                placeholder: "Ou vá para uma página que você tem acesso...",
+                allowClear: false, 
+                width: '100%',
+                minimumResultsForSearch: Infinity
+            });
+
+            // ⭐ MELHORIA: Navega imediatamente ao selecionar uma opção
+            $select.on('change', function() {
+                var url = $(this).val(); // 'this' é o select
+                if (url) { 
+                    window.location.href = url;
+                }
+            });
+
+            // ⭐ MELHORIA: Listener do botão "Ir" REMOVIDO
+            /*
+            $('#quick_nav_btn').on('click', function() {
+                ...
+            });
+            */
+        });
+    </script>
+    {% endblock extra_js %}

@@ -1,0 +1,12 @@
+{% extends 'cadastros/base.html' %}
+
+{% block content %}
+<h2>Editar Peça</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="bg-primary hover:opacity-85 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
+        Salvar Alterações
+    </button>
+</form>
+{% endblock %}

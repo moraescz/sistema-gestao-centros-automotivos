@@ -1,0 +1,184 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<style>
+    /* Estilização para todos os campos de formulário gerados pelo Django */
+    .form-style {
+        /* Garante que o input preencha a largura total do seu container */
+        @apply w-full bg-gray-800 border border-gray-700 rounded-xl py-3 px-4 text-white placeholder-gray-500 
+               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all;
+    }
+
+    /* Sobrescreve o estilo de erro, se houver */
+    .is-invalid {
+        @apply border-red-500 focus:ring-red-500;
+    }
+
+    /* Cor primária para o ícone e botões */
+    .bg-primary {
+        @apply bg-blue-600; 
+    }
+
+    /* Estilização customizada para o checkbox 'Ativo' */
+    #id_is_active {
+        @apply w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-600 ring-offset-gray-900 focus:ring-2 cursor-pointer;
+    }
+</style>
+
+<!-- Contêiner principal para centralizar o formulário na tela -->
+<!-- Ajustado para 'h-screen' e centralização garantida para fixar o formulário na viewport -->
+<div class="flex items-center justify-center h-screen p-4 sm:p-8">
+
+    <!-- Card do Formulário (Max-width e estilo de fundo) -->
+    <div class="w-full max-w-lg bg-gray-900/90 p-8 rounded-2xl shadow-2xl shadow-black/70 border border-gray-800 text-white">
+
+        <!-- Cabeçalho Centralizado -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-primary p-4 rounded-full mb-4">
+                <i class="fas fa-user-cog text-4xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold text-white">
+                {% if form.instance.pk %}
+                    Editar Funcionário
+                {% else %}
+                    Novo Funcionário
+                {% endif %}
+            </h1>
+            {% if form.instance.pk %}
+                <p class="text-primary font-semibold mt-2">{{ form.instance.username }}</p>
+            {% else %}
+                <p class="text-gray-400 mt-2">Preencha os dados para criar um novo usuário.</p>
+            {% endif %}
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Seção de Erros Gerais (non_field_errors) -->
+            {% if form.non_field_errors %}
+                <div class="bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-xl text-sm font-medium mb-4">
+                    <p class="font-bold mb-1">Erro Geral:</p>
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Campo 1: Nome de Usuário -->
+                <div class="relative">
+                    {% with field=form.username is_error=form.username.errors %}
+                        <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">
+                            {{ field.label }}
+                        </label>
+                        {{ field|add_class:"form-style" }}
+                        {% if is_error %}
+                            <div class="text-red-400 text-xs mt-1 font-medium">
+                                <i class="fas fa-exclamation-circle mr-1"></i> {{ field.errors.0 }}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Campo 2: Nome (First Name) -->
+                <div class="relative">
+                    {% with field=form.first_name is_error=form.first_name.errors %}
+                        <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">
+                            {{ field.label }}
+                        </label>
+                        {{ field|add_class:"form-style" }}
+                        {% if is_error %}
+                            <div class="text-red-400 text-xs mt-1 font-medium">
+                                <i class="fas fa-exclamation-circle mr-1"></i> {{ field.errors.0 }}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Campo 3: Sobrenome (Last Name) -->
+                <div class="relative">
+                    {% with field=form.last_name is_error=form.last_name.errors %}
+                        <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">
+                            {{ field.label }}
+                        </label>
+                        {{ field|add_class:"form-style" }}
+                        {% if is_error %}
+                            <div class="text-red-400 text-xs mt-1 font-medium">
+                                <i class="fas fa-exclamation-circle mr-1"></i> {{ field.errors.0 }}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Campo 4: E-mail -->
+                <div class="relative">
+                    {% with field=form.email is_error=form.email.errors %}
+                        <label for="{{ field.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">
+                            {{ field.label }}
+                        </label>
+                        {{ field|add_class:"form-style" }}
+                        {% if is_error %}
+                            <div class="text-red-400 text-xs mt-1 font-medium">
+                                <i class="fas fa-exclamation-circle mr-1"></i> {{ field.errors.0 }}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+            </div>
+
+            {% if not form.instance.pk %}
+            <!-- Campo de Senha (Visível apenas em Novo Funcionário) -->
+            <fieldset class="border-t border-gray-800 pt-6">
+                <legend class="text-lg font-semibold text-white mb-4">Definir Senha</legend>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Senha 1 -->
+                    <div class="relative">
+                        <label for="{{ form.password1.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.password1.label }}</label>
+                        {{ form.password1|add_class:"form-style" }}
+                    </div>
+                    <!-- Senha 2 -->
+                    <div class="relative">
+                        <label for="{{ form.password2.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.password2.label }}</label>
+                        {{ form.password2|add_class:"form-style" }}
+                    </div>
+                </div>
+            </fieldset>
+            {% endif %}
+            
+            <!-- Rodapé e Botões -->
+            <div class="flex flex-wrap justify-between items-center pt-6 mt-6 border-t border-gray-800">
+                
+                {% if form.instance.pk %}
+                <!-- Checkbox Ativo (Apenas em Edição) -->
+                <div class="flex items-center gap-3">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-gray-300 cursor-pointer">{{ form.is_active.label }}</label>
+                </div>
+                {% else %}
+                <div></div>
+                {% endif %}
+
+                <div class="flex justify-end gap-4">
+                    <!-- Botão Cancelar -->
+                    <a href="{% url 'listar_funcionarios' %}" 
+                        class="inline-flex items-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-xl hover:bg-gray-600 transition-all transform hover:scale-[1.03] shadow-md">
+                        <i class="fas fa-times mr-2"></i> Cancelar
+                    </a>
+                    
+                    <!-- Botão Salvar/Cadastrar (Cor primária) -->
+                    <button type="submit" 
+                            class="inline-flex items-center bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-[1.03]">
+                        <i class="fas fa-check mr-2"></i> 
+                        {% if form.instance.pk %}Salvar Alterações{% else %}Cadastrar Funcionário{% endif %}
+                    </button>
+                </div>
+            </div>
+
+    </div>
+    </form>
+</div>
+{% endblock %}

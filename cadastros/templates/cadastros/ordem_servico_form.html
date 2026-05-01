@@ -1,0 +1,159 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen p-4 sm:p-8">
+    
+    <div class="w-full max-w-4xl bg-gray-900/90 p-8 rounded-2xl shadow-2xl shadow-black/70 border border-gray-800 text-white">
+        
+        <div class="text-center mb-8">
+            <div class="inline-block bg-primary p-4 rounded-full mb-4 shadow-lg">
+                <i class="fas fa-file-invoice-dollar text-4xl text-white"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-white">
+                {% if form.instance.pk %}
+                    Editar Ordem de Serviço #{{ form.instance.pk }}
+                {% else %}
+                    Nova Ordem de Serviço
+                {% endif %}
+            </h2>
+            <p class="text-gray-400 mt-2">Detalhes e checklist de entrada do veículo.</p>
+        </div>
+
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-xl text-sm font-medium">
+                <p class="font-bold mb-1">Erro Geral:</p>
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+            {% endif %}
+
+            <fieldset class="border border-gray-700 p-6 rounded-xl shadow-inner shadow-gray-900/50">
+                <legend class="px-3 text-xl font-bold text-primary">Dados Principais</legend>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                    
+                    <div class="md:col-span-1">
+                        <label for="{{ form.veiculo.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.veiculo.label }}</label>
+                        {{ form.veiculo }}
+                        {% if form.veiculo.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.veiculo.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.quilometragem.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.quilometragem.label }}</label>
+                        {{ form.quilometragem }}
+                        {% if form.quilometragem.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.quilometragem.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.nivel_combustivel.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.nivel_combustivel.label }}</label>
+                        {{ form.nivel_combustivel }}
+                        {% if form.nivel_combustivel.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.nivel_combustivel.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.data_abertura.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">
+                            {{ form.data_abertura.label|default:"Data de Abertura" }}
+                        </label>
+                        {{ form.data_abertura }}
+                        {% if form.data_abertura.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.data_abertura.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="md:col-span-3"> <label for="{{ form.descricao.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.descricao.label }}</label>
+                        {{ form.descricao }}
+                        {% if form.descricao.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.descricao.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="border border-gray-700 p-6 rounded-xl shadow-inner shadow-gray-900/50">
+                <legend class="px-3 text-xl font-bold text-primary">Checklist de Itens</legend>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-4">
+                    
+                    <div>
+                        <label for="{{ form.oleo_motor.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.oleo_motor.label }}</label>
+                        {{ form.oleo_motor }}
+                        {% if form.oleo_motor.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.oleo_motor.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.alinhamento.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.alinhamento.label }}</label>
+                        {{ form.alinhamento }}
+                        {% if form.alinhamento.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.alinhamento.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.bateria.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.bateria.label }}</label>
+                        {{ form.bateria }}
+                        {% if form.bateria.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.bateria.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.palheta_dianteira.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.palheta_dianteira.label }}</label>
+                        {{ form.palheta_dianteira }}
+                        {% if form.palheta_dianteira.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.palheta_dianteira.errors.0 }}</div>{% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.palheta_traseira.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.palheta_traseira.label }}</label>
+                        {{ form.palheta_traseira }}
+                        {% if form.palheta_traseira.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.palheta_traseira.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+            </fieldset>
+            
+            <fieldset class="border border-gray-700 p-6 rounded-xl shadow-inner shadow-gray-900/50">
+                <legend class="px-3 text-xl font-bold text-primary">Checklist de Luzes (Marque se OK)</legend>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-4 pt-4 text-sm">
+                    {% for field in form %}
+                        {% if field.name|slice:":4" == 'luz_' %}
+                        <div class="flex items-center gap-3">
+                            {{ field }}
+                            <label for="{{ field.id_for_label }}" class="font-medium text-gray-300 cursor-pointer">{{ field.label }}</label>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <fieldset class="border border-gray-700 p-6 rounded-xl shadow-inner shadow-gray-900/50">
+                <legend class="px-3 text-xl font-bold text-primary">Avarias e Finalização</legend>
+                <div class="space-y-6 pt-4">
+
+                    <div>
+                        <label for="{{ form.observacoes_avarias.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-300">{{ form.observacoes_avarias.label }}</label>
+                        {{ form.observacoes_avarias }}
+                        {% if form.observacoes_avarias.errors %}<div class="text-red-400 text-xs mt-1 p-1"><i class="fas fa-exclamation-circle mr-1"></i> {{ form.observacoes_avarias.errors.0 }}</div>{% endif %}
+                    </div>
+
+                </div>
+            </fieldset>
+
+            <div class="flex justify-end gap-4 pt-4">
+                
+                <button type="button" onclick="window.history.back()" class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium py-2 px-5 rounded-lg transition duration-300 ease-in-out">
+                    Cancelar
+                </button>
+                <button type="submit" class="bg-primary text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                    {% if form.instance.pk %}
+                        <i class="fas fa-save mr-2"></i> Salvar Alterações
+                    {% else %}
+                        <i class="fas fa-plus mr-2"></i> Cadastrar Ordem
+                    {% endif %}
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Para navegadores baseados em WebKit (Chrome, Edge, Safari):
+      Inverte a cor do ícone (preto vira branco).
+    */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
+</style>
+
+{% endblock %}

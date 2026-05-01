@@ -1,0 +1,229 @@
+{% load static %}
+{% load l10n %}
+
+<div id="tabela-veiculos" class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden htmx-fade-container">
+
+    {% if page_obj %}
+        <div class="hidden md:block overflow-x-auto">
+            <table class="min-w-full text-left border-collapse">
+                <thead class="text-sm uppercase text-gray-200 tracking-wider border-b-2 border-gray-600 bg-gradient-to-r from-gray-700/60 to-gray-800/60">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-semibold text-left">
+                            <i class="fas fa-car text-primary mr-2"></i>Veículo / Placa
+                        </th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-left">
+                            <i class="fas fa-user text-primary mr-2"></i>Cliente
+                        </th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-center">
+                            <i class="fas fa-calendar-alt text-primary mr-2"></i>Ano
+                        </th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-center">
+                            <i class="fas fa-palette text-primary mr-2"></i>Cor
+                        </th>
+                        <th scope="col" class="px-6 py-4 font-semibold text-center">
+                            <i class="fas fa-cogs text-primary mr-2"></i>Ações
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for veiculo in page_obj %}
+                    <tr class="bg-gray-900/50 transition-all duration-300 hover:bg-gray-700/60 hover:shadow-lg border-b border-gray-700/50 group">
+                        
+                        <td class="px-6 py-4 font-bold text-sm">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-car text-primary text-lg"></i>
+                                </div>
+                                <div>
+                                    <a href="{% url 'veiculo_historico' veiculo.id %}"
+                                       class="text-primary hover:text-blue-400 font-semibold transition-colors duration-200 hover:underline whitespace-nowrap">
+                                        {{ veiculo.modelo }}
+                                    </a>
+                                    <p class="text-gray-400 text-xs">{{ veiculo.placa }}</p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4 text-gray-300 whitespace-nowrap">
+                            {{ veiculo.cliente.nome }}
+                        </td>
+
+                        <td class="px-6 py-4 text-gray-300 text-center whitespace-nowrap">
+                            {{ veiculo.ano|unlocalize }}
+                        </td>   
+                        
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-4 py-2 text-xs font-bold leading-tight rounded-full shadow-lg
+                                          bg-gradient-to-r from-gray-500 to-gray-600 text-gray-100">
+                                {{ veiculo.cor|default:"Não informada" }}
+                            </span>
+                        </td>
+
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center space-x-2 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                <a href="{% url 'veiculo_historico' veiculo.id %}"
+                                   class="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-200 transform hover:scale-110"
+                                   title="Histórico do Veículo">
+                                    <i class="fas fa-history"></i>
+                                </a>
+                                {% if perms.cadastros.change_veiculo %}
+                                <a href="{% url 'editar_veiculo' veiculo.id %}"
+                                   class="p-2 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200 transform hover:scale-110"
+                                   title="Editar Veículo">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.cadastros.delete_veiculo %}
+                                
+                                <a href="{% url 'excluir_veiculo' veiculo.id %}"
+                                   data-hx-boost="false"
+                                   class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-200 transform hover:scale-110"
+                                   title="Excluir Veículo">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="md:hidden space-y-4 p-4">
+            {% for veiculo in page_obj %}
+            <div class="bg-gray-900/50 rounded-xl p-4 border border-gray-700/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-car text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-semibold">{{ veiculo.placa }}</h3>
+                            <p class="text-gray-400 text-sm">{{ veiculo.modelo }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mb-4 text-sm">
+                    <div>
+                        <p class="text-gray-400 truncate"><i class="fas fa-user mr-1"></i>Cliente</p>
+                        <p class="text-white truncate">{{ veiculo.cliente.nome }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400"><i class="fas fa-calendar-alt mr-1"></i>Ano</p>
+                        <p class="text-white">{{ veiculo.ano|floatformat:0 }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400"><i class="fas fa-palette mr-1"></i>Cor</p>
+                        <p class="text-white">{{ veiculo.cor|default:"-" }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2">
+                    <a href="{% url 'veiculo_historico' veiculo.id %}"
+                       class="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-200">
+                        <i class="fas fa-history"></i>
+                    </a>
+                    {% if perms.cadastros.change_veiculo %}
+                    <a href="{% url 'editar_veiculo' veiculo.id %}"
+                       class="p-2 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/20 rounded-lg transition-all duration-200">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                    {% if perms.cadastros.delete_veiculo %}
+                    
+                    <a href="{% url 'excluir_veiculo' veiculo.id %}"
+                       data-hx-boost="false"
+                       class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-200">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="p-4 pt-6 pb-4 flex flex-col sm:flex-row items-center justify-between text-sm border-t border-gray-700 gap-4">
+            <span class="text-gray-400 whitespace-nowrap">
+                Página <strong class="text-white">{{ page_obj.number }}</strong> de <strong class="text-white">{{ page_obj.paginator.num_pages }}</strong>
+            </span>
+            
+            <div class="flex items-center gap-2 flex-wrap justify-center">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}"
+                       hx-get="{% url 'listar_veiculos' %}?page=1{% if search_query %}&q={{ search_query }}{% endif %}"
+                       hx-target="#tabela-veiculos" hx-swap="innerHTML" hx-scroll="window:top"
+                       class="inline-flex items-center gap-2 bg-primary text-white hover:bg-opacity-80 font-bold py-2.5 px-4 rounded-xl transition-colors duration-200 text-xs sm:text-sm whitespace-nowrap">
+                        <i class="fas fa-angle-double-left text-xs"></i><span class="hidden sm:inline">Primeira</span>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 bg-gray-700 text-gray-500 border border-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm whitespace-nowrap cursor-not-allowed">
+                        <i class="fas fa-angle-double-left text-xs"></i><span class="hidden sm:inline">Primeira</span>
+                    </span>
+                {% endif %}
+
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                       hx-get="{% url 'listar_veiculos' %}?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                       hx-target="#tabela-veiculos" hx-swap="innerHTML" hx-scroll="window:top"
+                       class="inline-flex items-center gap-2 bg-primary text-white hover:bg-opacity-80 font-bold py-2.5 px-4 rounded-xl transition-colors duration-200 text-xs sm:text-sm whitespace-nowrap">
+                        <i class="fas fa-angle-left text-xs"></i><span class="hidden sm:inline">Anterior</span>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 bg-gray-700 text-gray-500 border border-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm whitespace-nowrap cursor-not-allowed">
+                        <i class="fas fa-angle-left text-xs"></i><span class="hidden sm:inline">Anterior</span>
+                    </span>
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                       hx-get="{% url 'listar_veiculos' %}?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                       hx-target="#tabela-veiculos" hx-swap="innerHTML" hx-scroll="window:top"
+                       class="inline-flex items-center gap-2 bg-primary text-white hover:bg-opacity-80 font-bold py-2.5 px-4 rounded-xl transition-colors duration-200 text-xs sm:text-sm whitespace-nowrap">
+                        <span class="hidden sm:inline">Próxima</span><i class="fas fa-angle-right text-xs"></i>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 bg-gray-700 text-gray-500 border border-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm whitespace-nowrap cursor-not-allowed">
+                        <span class="hidden sm:inline">Próxima</span><i class="fas fa-angle-right text-xs"></i>
+                    </span>
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                       hx-get="{% url 'listar_veiculos' %}?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                       hx-target="#tabela-veiculos" hx-swap="innerHTML" hx-scroll="window:top"
+                       class="inline-flex items-center gap-2 bg-primary text-white hover:bg-opacity-80 font-bold py-2.5 px-4 rounded-xl transition-colors duration-200 text-xs sm:text-sm whitespace-nowrap">
+                        <span class="hidden sm:inline">Última</span><i class="fas fa-angle-double-right text-xs"></i>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 bg-gray-700 text-gray-500 border border-gray-700 font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm whitespace-nowrap cursor-not-allowed">
+                        <span class="hidden sm:inline">Última</span><i class="fas fa-angle-double-right text-xs"></i>
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <div class="text-center py-16 px-4">
+            <div class="w-24 h-24 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-car-side text-4xl text-gray-500"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-300 mb-2">Nenhum veículo encontrado</h3>
+            <p class="text-gray-500 mb-6">
+                {% if search_query %}Sua busca por "<strong class="text-white">{{ search_query }}</strong>" não retornou resultados.
+                {% else %}Comece cadastrando um novo veículo.
+                {% endif %}
+            </p>
+            {% if perms.cadastros.add_veiculo and not search_query %}
+            <a href="{% url 'cadastrar_veiculo' %}"
+               class="inline-flex items-center gap-2 bg-primary text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                <i class="fas fa-plus"></i> Cadastrar primeiro veículo
+            </a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+</div>

@@ -1,0 +1,90 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Estilização para os campos de formulário gerados pelo Django.
+      Eles recebem o estilo padrão de input dark mode.
+    */
+    #id_descricao,
+    #id_quantidade,
+    #id_valor_unitario,
+    #id_subtotal {
+        @apply w-full bg-gray-900/70 border border-gray-700 text-gray-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 placeholder-gray-500 transition-colors duration-200;
+    }
+
+    /* Ajuste de altura para o campo de descrição (textarea) */
+    #id_descricao {
+        @apply min-h-[120px];
+    }
+
+    /* Estilo para campos desabilitados (como o subtotal, se for) */
+    input:disabled,
+    textarea:disabled {
+        @apply bg-gray-800/50 text-gray-500 cursor-not-allowed opacity-75;
+    }
+</style>
+
+<div class="p-4 sm:p-8 max-w-2xl mx-auto text-white space-y-6">
+    
+    <div class="mb-6 pb-4 border-b-2 border-primary">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-primary">Adicionar Serviço à OS #{{ ordem.pk }}</h1>
+        <p class="text-gray-400 mt-2 text-lg">Descreva o serviço adicional e defina o valor correspondente.</p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="bg-gray-800 rounded-xl p-6 md:p-8 shadow-xl shadow-black/50 border border-gray-700 space-y-6">
+
+            {% if form.non_field_errors or form.errors %}
+                <div class="bg-red-900 bg-opacity-40 border border-red-500 text-red-300 p-4 rounded-lg" role="alert">
+                    <p class="font-bold mb-2 flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i> Foram encontrados os seguintes erros:</p>
+                    <ul class="list-disc list-inside space-y-1 pl-2">
+                        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div>
+                <label for="{{ form.descricao.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Descrição do Serviço</label>
+                {{ form.descricao }}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.quantidade.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Quantidade</label>
+                    {{ form.quantidade }}
+                </div>
+
+                <div>
+                    <label for="{{ form.valor_unitario.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Valor Unitário (R$)</label>
+                    {{ form.valor_unitario }}
+                </div>
+            </div>
+
+            <div>
+                <label for="{{ form.subtotal.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Subtotal (R$)</label>
+                {{ form.subtotal }}
+                <p class="text-xs text-gray-400 mt-2">Calculado automaticamente (quantidade × valor unitário).</p>
+            </div>
+
+            <div class="pt-6 border-t border-gray-700 flex flex-wrap justify-end items-center gap-4">
+                <a href="{% url 'ordem_servico_detalhe' ordem.pk %}" 
+                   class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-5 rounded-lg transform hover:scale-[1.03] transition-all duration-200">
+                   <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" 
+                        class="inline-flex items-center gap-2 bg-primary text-white font-semibold py-3 px-5 rounded-lg shadow-md transform hover:scale-[1.03] transition-all duration-200">
+                    <i class="fas fa-check"></i> Adicionar Serviço
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

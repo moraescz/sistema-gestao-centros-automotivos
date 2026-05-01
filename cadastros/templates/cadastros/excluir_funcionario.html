@@ -1,0 +1,69 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load custom_filters %} {# Assumindo que o |default vem daqui %}
+
+{% block content %}
+<style>
+    /* Animação para o ícone flutuar (aviso/perigo) */
+    @keyframes float-alert {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+    .animate-float-alert {
+        animation: float-alert 3s ease-in-out infinite;
+    }
+</style>
+
+{# Centraliza a caixa na área de conteúdo visível #}
+<div class="flex items-center justify-center min-h-[calc(100vh-10rem)] p-8 text-white">
+    <div class="max-w-md w-full text-center bg-black bg-opacity-70 p-8 sm:p-12 rounded-2xl shadow-2xl border border-red-500/50">
+        
+        <div class="text-7xl text-red-500 mb-4 inline-block animate-float-alert">
+            <i class="fas fa-user-slash"></i>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl font-bold mb-2">Confirmar Desativação</h1>
+
+        <p class="text-gray-300 mb-6">
+            Tem a certeza que deseja desativar o funcionário <br>
+            
+            <!-- 
+              CORREÇÃO: 
+              O traceback indica que a view (provavelmente DeleteView)
+              passa a variável como 'object'. Usamos 'object' aqui.
+            -->
+            <strong class="font-semibold text-lg text-red-300">
+                "{{ object.get_full_name|default:object.username }}"
+            </strong>
+        </p>
+        <p class="text-sm text-yellow-300 mb-8">
+            O funcionário não poderá mais aceder ao sistema.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                
+                <!-- 
+                  MELHORIA DE UX: 
+                  Link direto para a lista de funcionários.
+                  Altere 'listar_funcionarios' se o nome da sua URL for diferente.
+                -->
+                <a href="{% url 'listar_funcionarios' %}" 
+                   class="flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-gray-600/40">
+                   <i class="fas fa-times fa-fw"></i>
+                   Cancelar
+                </a>
+
+                <button type="submit" 
+                        class="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-red-600/30 hover:shadow-red-500/40">
+                    <i class="fas fa-user-slash fa-fw"></i>
+                    Confirmar Desativação
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
+

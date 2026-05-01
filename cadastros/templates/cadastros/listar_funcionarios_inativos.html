@@ -1,0 +1,114 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto text-white">
+
+    <div id="topo-lista" class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h1 class="text-3xl sm:text-3xl font-extrabold text-red-400 border-b-4 border-red-500 pb-2 mb-2">
+            <i class="fas fa-users-slash text-red-400 mr-2"></i>Funcionários Inativos
+        </h1>
+        <a href="{% url 'listar_funcionarios' %}" class="w-full sm:w-auto bg-primary hover:opacity-85 text-white font-bold py-2 px-4 rounded-xl shadow-lg shadow-primary/30 transition duration-200 transform hover:scale-[1.02]">
+            <i class="fas fa-user-check mr-2"></i> Ver Ativos
+        </a>
+    </div>
+
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-700/50 p-6 mb-6 animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-white flex items-center">
+                <i class="fas fa-search text-red-500 mr-2"></i>Pesquisa
+            </h3>
+        </div>
+    
+        <div id="filters-content" class="flex flex-col md:flex-row md:items-end gap-4">
+            
+            <div class="relative flex-1 w-full">
+                <label for="q" class="sr-only">Buscar</label> 
+                
+                <form method="get" action="{% url 'listar_funcionarios_inativos' %}" class="relative" 
+                      hx-get="{% url 'listar_funcionarios_inativos' %}" 
+                      hx-target="#tabela-funcionarios-inativos"
+                      hx-trigger="submit, keyup delay:50ms changed from:input[name=q]">
+                    
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    
+                    <input type="text" name="q" id="q" value="{{ search_query|default:'' }}"
+                           class="block w-full bg-gray-900/80 border border-gray-600 rounded-xl py-3 pl-12 pr-12 leading-5 placeholder-gray-500 text-white focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 shadow-lg"
+                           placeholder="Buscar por Nome ou Usuário...">
+                           
+                    <button type="submit" class="hidden"></button>
+                    
+                    {% if search_query %}
+                    <a href="{% url 'listar_funcionarios_inativos' %}" class="absolute inset-y-0 right-4 top-0 bottom-0 flex items-center text-gray-400 hover:text-red-400 transition-colors" title="Limpar pesquisa">
+                        <i class="fas fa-times-circle"></i>
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div> <div id="tabela-funcionarios-inativos" class="htmx-fade-container">
+            
+        {% include 'cadastros/_tabela_funcionarios_inativos.html' %}
+    
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // --- FUNÇÃO DE ROLAGEM SUAVE ---
+    function rolarLentamente(elementoAlvo, duracao) {
+        const alvoPosicao = elementoAlvo.getBoundingClientRect().top + window.scrollY - 20;
+        const inicioPosicao = window.scrollY;
+        const distancia = alvoPosicao - inicioPosicao;
+        let tempoInicial = null;
+
+        function animacao(tempoAtual) {
+            if (tempoInicial === null) tempoInicial = tempoAtual;
+            const tempoDecorrido = tempoAtual - tempoInicial;
+            const t = tempoDecorrido / (duracao / 2);
+            let novaPosicao;
+            
+            if (t < 1) {
+                novaPosicao = distancia / 2 * t * t + inicioPosicao;
+            } else {
+                const t2 = t - 1;
+                novaPosicao = -distancia / 2 * (t2 * (t2 - 2) - 1) + inicioPosicao;
+            }
+
+            window.scrollTo(0, novaPosicao);
+
+            if (tempoDecorrido < duracao) {
+                requestAnimationFrame(animacao);
+            } else {
+                window.scrollTo(0, alvoPosicao); 
+            }
+        }
+        requestAnimationFrame(animacao);
+    }
+
+    // --- LISTENER DO HTMX ---
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // 2. VERIFIQUE O ID CORRETO DA TABELA ⬇️
+        if (evt.target.id === 'tabela-funcionarios-inativos') {
+            
+            const elementoDisparador = evt.detail.requestConfig.elt;
+            
+            // Apenas rola se NÃO for filtro de texto ou select
+            if (elementoDisparador && 
+                elementoDisparador.tagName !== 'INPUT' && 
+                elementoDisparador.tagName !== 'SELECT') {
+                
+                const topo = document.getElementById('topo-lista');
+                if (topo) {
+                    rolarLentamente(topo, 1000); // 1000ms = 1 segundo (mais suave)
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

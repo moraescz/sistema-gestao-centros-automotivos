@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ordem de Serviço Finalizada</title>
+</head>
+<body>
+    <h2>Ordem de Serviço Finalizada</h2>
+    <p>Prezado(a) {{ os.veiculo.cliente.nome }},</p>
+    <p>Sua Ordem de Serviço #{{ os.pk }} para o veículo {{ os.veiculo.modelo }} ({{ os.veiculo.placa }}) foi finalizada.</p>
+    <p>Valor Total: R$ {{ os.valor_total }}</p>
+    <p>Data de Conclusão: {{ os.data_conclusao|date:"d/m/Y" }}</p>
+    <p>Obrigado por escolher nossa oficina! Estamos à disposição para qualquer dúvida.</p>
+    <br>
+    <p>Atenciosamente,<br>Centro Automotivo Premier</p>
+</body>
+</html>

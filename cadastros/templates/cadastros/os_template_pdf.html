@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Ordem de Serviço #{{ os.pk }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 1.5cm; /* Margem igual mantida */
+
+            @frame header_frame {
+                -pdf-frame-content: header_content;
+                left: 1.5cm; width: 18cm; top: 1cm; height: 1.8cm; /* Altura ligeiramente reduzida */
+            }
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 1.5cm; width: 18cm; top: 27.5cm; height: 0.8cm; /* Reposicionado e altura reduzida */
+            }
+        }
+
+        body {
+            font-family: "Helvetica", Arial, sans-serif;
+            font-size: 9pt; /* Reduzido de 9.5pt */
+            color: #222;
+            line-height: 1.35; /* Levemente reduzido */
+        }
+
+        /* --- Cabeçalho --- */
+        #header_content { font-size: 8.5pt; color: #555; } /* Fonte menor */
+        #header_content .logo { max-width: 130px; max-height: 45px; float: left; margin-right: 15px; } /* Logo menor */
+        #header_content .company-details { line-height: 1.25; } /* Mais compacto */
+        #header_content h1 { font-size: 11pt; font-weight: bold; color: #000; margin: 0 0 2px 0; } /* Fonte menor */
+        #header_content .address { font-size: 7.5pt; } /* Menor */
+        #header_content hr { border: 0; border-top: 0.5px solid #ccc; margin-top: 5px; } /* Menos espaço */
+
+        /* --- Rodapé --- */
+        #footer_content { text-align: center; font-size: 7.5pt; color: #888; } /* Menor */
+
+        /* --- Títulos --- */
+        h1.main-title {
+            font-size: 17pt; /* Reduzido */
+            text-align: center;
+            margin: 0 0 3px 0;
+            color: {{ config.cor_primaria|default:'#004488' }};
+        }
+        p.subtitle {
+            text-align: center;
+            color: #555;
+            font-size: 9pt; /* Reduzido */
+            margin-bottom: 20px; /* Reduzido */
+        }
+        h2.section-title {
+            font-size: 10.5pt; /* Reduzido */
+            color: {{ config.cor_primaria|default:'#004488' }};
+            border-bottom: 0.8px solid {{ config.cor_primaria|default:'#004488' }};
+            padding-bottom: 2px; /* Reduzido */
+            margin: 15px 0 8px 0; /* Espaçamento reduzido */
+            page-break-before: auto;
+            page-break-after: avoid;
+        }
+
+        /* --- Tabelas --- */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; page-break-inside: auto; } /* Margem reduzida */
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        th, td { border: 1px solid #E0E0E0; padding: 5px 7px; text-align: left; vertical-align: top; } /* Padding reduzido */
+        th {
+            background-color: #F0F0F0; color: #333; font-weight: bold; font-size: 9pt; /* Reduzido */
+        }
+        .items-table tbody tr:nth-child(even) { background-color: #FAFAFA; }
+
+        /* Grid Cliente/Veículo */
+        .grid-table { border: none; margin-bottom: 15px; } /* Margem reduzida */
+        .grid-table td { border: none; width: 50%; padding: 0; vertical-align: top; }
+        .grid-table td:first-child { padding-right: 8px; } /* Padding reduzido */
+        .grid-table td:last-child { padding-left: 8px; } /* Padding reduzido */
+        .grid-table .section p { margin-bottom: 4px; font-size: 8.5pt; } /* Menor espaçamento e fonte */
+        .grid-table .section p b { display: inline-block; min-width: 60px; font-weight: bold; } /* Largura reduzida */
+
+        /* Checklist */
+        .checklist-table td { font-size: 8pt; width: 33.3%; padding: 4px 6px; } /* Menor ainda */
+        .checklist-table td b { font-weight: bold; }
+        .status-ok { color: #1E8E3E; font-weight: bold; }
+        .status-fail { color: #D93025; font-weight: bold; }
+        .status-review { color: #F9AB00; font-weight: bold; }
+        .status-na { color: #5F6368; }
+
+        /* Itens (Peças/Serviços) */
+        .items-table th { background-color: {{ config.cor_primaria|default:'#004488' }}; color: white; font-size: 9pt; padding: 6px 8px; } /* Padding reduzido */
+        .items-table td { font-size: 8.5pt; } /* Reduzido */
+        .items-table td.qty { text-align: center; }
+        .items-table td.currency { text-align: right; }
+        .items-table .item-type { font-size: 7pt; color: #777; margin-left: 4px; } /* Reduzido */
+
+        /* --- Outros --- */
+        .description-box {
+            border: 1px solid #E0E0E0; padding: 8px; /* Padding reduzido */
+            border-radius: 3px; background-color: #FFFFFF;
+            min-height: 0; /* Removido min-height */
+            margin-bottom: 15px; /* Reduzido */
+            page-break-inside: auto; /* Permitir quebrar se for muito longo */
+            font-size: 9pt; /* Reduzido */
+        }
+        .total-section { text-align: right; margin-top: 15px; page-break-before: avoid; } /* Margin reduzida e avoid page break */
+        .total-section h3 { font-size: 9.5pt; font-weight: normal; color: #444; margin: 0 0 3px 0; }
+        .total-section h2 {
+            font-size: 12pt; /* Reduzido */
+            font-weight: bold; color: {{ config.cor_primaria|default:'#004488' }};
+            margin: 0; padding-top: 4px; border-top: 0.8px solid #ccc; /* Linha mais fina */
+            display: inline-block;
+        }
+        .signature { margin-top: 40px; page-break-before: auto; page-break-inside: avoid; } /* Margin reduzida */
+        .signature-line {
+            border-top: 1px solid #333333; width: 200px; /* Menor */
+            padding-top: 3px; /* Reduzido */
+            margin: 40px auto 0 auto; /* Reduzido e centralizado */
+            text-align: center; font-size: 8pt; /* Reduzido */
+        }
+        .status-label {
+            font-weight: bold; padding: 1px 4px; /* Padding reduzido */
+            border-radius: 3px; font-size: 8pt; /* Reduzido */
+            color: white; white-space: nowrap;
+        }
+        .status-andamento { background-color: #F9AB00; color: #333; }
+        .status-finalizada { background-color: #1E8E3E; }
+        .status-aguardando { background-color: #F9AB00; color: #333; }
+        .status-aprovado { background-color: {{ config.cor_primaria|default:'#004488' }}; }
+        .status-reprovado { background-color: #D93025; }
+
+    </style>
+</head>
+<body>
+
+    <div id="header_content">
+        {% if config.logo and config.logo.url %}
+            <img src="{{ config.logo.path }}" class="logo" alt="Logo">
+        {% endif %}
+        <div class="company-details">
+            <h1>{{ config.nome_empresa|default:'Nome da Empresa' }}</h1>
+            {# Adicione mais detalhes se tiver no modelo ConfiguracoesGerais #}
+            {# <p class="address">Rua Exemplo, 123 - Bairro - CEP - Cidade/Estado</p> #}
+            {# <p>Telefone: (XX) XXXX-XXXX | Email: contato@empresa.com</p> #}
+        </div>
+        <div style="clear: both;"></div>
+        <hr>
+    </div>
+
+    <div id="footer_content">
+        {{ config.nome_empresa|default:'Centro Automotivo' }} | Gerado em {% now "d/m/Y H:i" %} | Página <pdf:pagenumber /> de <pdf:pagecount />
+    </div>
+
+    <h1 class="main-title">Ordem de Serviço #{{ os.pk }}</h1>
+    <p class="subtitle">
+        Data de Abertura: {{ os.data_abertura|date:"d/m/Y" }}
+        {% if os.finalizada and os.data_conclusao %}
+            | Data de Conclusão: {{ os.data_conclusao|date:"d/m/Y" }}
+        {% endif %}
+    </p>
+
+     <table class="grid-table">
+        <tr>
+            <td>
+                <div class="section">
+                    <h2 class="section-title">Dados do Cliente</h2>
+                    <p><b>Nome:</b> {{ os.veiculo.cliente.nome }}</p>
+                    <p><b>Telefone:</b> {{ os.veiculo.cliente.telefone|default:"-" }}</p>
+                    <p><b>Email:</b> {{ os.veiculo.cliente.email|default:"-" }}</p>
+                </div>
+            </td>
+            <td>
+                <div class="section">
+                    <h2 class="section-title">Dados do Veículo</h2>
+                    <p><b>Modelo:</b> {{ os.veiculo.modelo }}</p>
+                    <p><b>Ano:</b> {{ os.veiculo.ano|default:"-" }}</p>
+                    <p><b>Placa:</b> {{ os.veiculo.placa }}</p>
+                    <p><b>Cor:</b> {{ os.veiculo.cor|default:"-" }}</p>
+                    <p><b>KM:</b> {{ os.quilometragem|default:"-" }} km</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <h2 class="section-title">Status da Ordem de Serviço</h2>
+    <table style="border: none; margin-bottom: 15px;"> {# Margem reduzida #}
+        <tr style="page-break-inside: avoid;">
+            <td style="border: none; padding: 1px 0; width: 110px;"><b>Status Geral:</b></td> {# Padding reduzido #}
+            <td style="border: none; padding: 1px 0;">
+                {% if os.finalizada %}
+                    <span class="status-label status-finalizada">Finalizada</span>
+                {% elif os.status_aprovacao == 'APROVADO' %}
+                    <span class="status-label status-aprovado">Aprovado Pelo Cliente</span>
+                {% else %}
+                    <span class="status-label status-andamento">Em Andamento</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr style="page-break-inside: avoid;">
+            <td style="border: none; padding: 1px 0;"><b>Status Aprovação:</b></td> {# Padding reduzido #}
+            <td style="border: none; padding: 1px 0;">
+                {% if os.status_aprovacao == 'AGUARDANDO' %}
+                    <span class="status-label status-aguardando">{{ os.get_status_aprovacao_display }}</span>
+                {% elif os.status_aprovacao == 'APROVADO' %}
+                    <span class="status-label status-aprovado">{{ os.get_status_aprovacao_display }}</span>
+                {% elif os.status_aprovacao == 'REPROVADO' %}
+                    <span class="status-label status-reprovado">{{ os.get_status_aprovacao_display }}</span>
+                {% elif os.status_aprovacao == 'FINALIZADO' %}
+                     <span class="status-label status-finalizada">{{ os.get_status_aprovacao_display }}</span>
+                {% else %}
+                    <span>{{ os.get_status_aprovacao_display|default:"-" }}</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+
+    <h2 class="section-title">Descrição do Problema / Serviço Solicitado</h2>
+    <div class="description-box">
+        {{ os.descricao|linebreaksbr|default:"Nenhuma descrição informada." }}
+    </div>
+
+    <h2 class="section-title">Checklist de Itens</h2>
+    <table class="checklist-table">
+        <tr>
+            <td><b>Óleo do Motor:</b> <span class="status-{% if os.oleo_motor == 'BOM' %}ok{% elif os.oleo_motor == 'RUIM' %}fail{% elif os.oleo_motor == 'REVISAR' %}review{% else %}na{% endif %}">{{ os.get_oleo_motor_display|default:"-" }}</span></td>
+            <td><b>Alinhamento:</b> <span class="status-{% if os.alinhamento == 'BOM' %}ok{% elif os.alinhamento == 'RUIM' %}fail{% elif os.alinhamento == 'REVISAR' %}review{% else %}na{% endif %}">{{ os.get_alinhamento_display|default:"-" }}</span></td>
+            <td><b>Bateria:</b> <span class="status-{% if os.bateria == 'BOM' %}ok{% elif os.bateria == 'RUIM' %}fail{% elif os.bateria == 'REVISAR' %}review{% else %}na{% endif %}">{{ os.get_bateria_display|default:"-" }}</span></td>
+        </tr>
+        <tr>
+            <td><b>Palhetas Diant.:</b> <span class="status-{% if os.palheta_dianteira == 'BOM' %}ok{% elif os.palheta_dianteira == 'RUIM' %}fail{% elif os.palheta_dianteira == 'REVISAR' %}review{% else %}na{% endif %}">{{ os.get_palheta_dianteira_display|default:"-" }}</span></td>
+            <td><b>Palhetas Tras.:</b> <span class="status-{% if os.palheta_traseira == 'BOM' %}ok{% elif os.palheta_traseira == 'RUIM' %}fail{% elif os.palheta_traseira == 'REVISAR' %}review{% else %}na{% endif %}">{{ os.get_palheta_traseira_display|default:"-" }}</span></td>
+            <td><b>Combustível:</b> <span class="status-na">{{ os.get_nivel_combustivel_display|default:"-" }}</span></td>
+        </tr>
+    </table>
+
+    <h2 class="section-title">Checklist de Luzes</h2>
+    <table class="checklist-table">
+        <tr>
+            <td>Seta Diant. Esq.: {% if os.luz_seta_dianteira_esq %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+            <td>Seta Diant. Dir.: {% if os.luz_seta_dianteira_dir %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+            <td>Farol Baixo Esq.: {% if os.luz_farol_baixo_esq %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+        </tr>
+        <tr>
+            <td>Farol Baixo Dir.: {% if os.luz_farol_baixo_dir %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+            <td>Farol Alto Esq.: {% if os.luz_farol_alto_esq %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+            <td>Farol Alto Dir.: {% if os.luz_farol_alto_dir %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+        </tr>
+        <tr>
+            <td>Seta Tras. Esq.: {% if os.luz_seta_traseira_esq %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+            <td>Seta Tras. Dir.: {% if os.luz_seta_traseira_dir %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+            <td>Freio Esq.: {% if os.luz_freio_esq %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+        </tr>
+        <tr>
+            <td>Freio Dir.: {% if os.luz_freio_dir %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+            <td>Ré Esq.: {% if os.luz_re_esq %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+            <td>Ré Dir.: {% if os.luz_re_dir %}<span class="status-ok">OK</span>{% else %}<span class="status-fail">Verificar</span>{% endif %}</td>
+        </tr>
+    </table>
+
+    {% if os.observacoes_avarias %}
+        <h2 class="section-title">Observações / Avarias Constatadas</h2>
+        <div class="description-box" style="background-color: #FFF3F3; border-color: #F5C6CB;">
+            {{ os.observacoes_avarias|linebreaksbr }}
+        </div>
+    {% endif %}
+
+    {% if pecas_utilizadas or servicos_utilizados %}
+        <h2 class="section-title">Peças e Serviços Utilizados</h2>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 50%;">Item</th>
+                    <th class="qty" style="width: 10%;">Qtd.</th>
+                    <th class="currency" style="width: 20%;">Valor Unit.</th>
+                    <th class="currency" style="width: 20%;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pecas_utilizadas %}
+                <tr>
+                    <td>{{ item.peca.nome }}<span class="item-type">(Peça)</span></td>
+                    <td class="qty">{{ item.quantidade_utilizada }}</td>
+                    <td class="currency">R$ {{ item.peca.valor_unitario|floatformat:2 }}</td>
+                    <td class="currency">R$ {{ item.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+                {% for servico in servicos_utilizados %}
+                 <tr>
+                    <td>{{ servico.descricao }}<span class="item-type">(Serviço)</span></td>
+                    <td class="qty">{{ servico.quantidade|default:1 }}</td>
+                    <td class="currency">R$ {{ servico.valor_unitario|floatformat:2 }}</td>
+                    <td class="currency">R$ {{ servico.valor|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="margin-top: 15px; color: #555; font-style: italic;">Nenhuma peça ou serviço adicional registrado para esta OS.</p>
+    {% endif %}
+
+    <div class="total-section">
+        <h2>
+            Valor Total: R$ {{ os.get_valor_total_real|floatformat:2 }}
+        </h2>
+    </div>
+
+    <div class="signature">
+        <div class="signature-line">
+            Assinatura do Cliente / Responsável
+        </div>
+    </div>
+
+</body>
+</html>

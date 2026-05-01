@@ -1,0 +1,45 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen p-4 sm:p-8 text-white">
+    
+    <div class="max-w-xl w-full text-center bg-gray-900/95 p-8 sm:p-12 rounded-2xl shadow-3xl shadow-black/70 border border-red-800">
+        
+        <div class="text-7xl text-red-600 mb-6 drop-shadow-lg">
+            <i class="fas fa-times-circle"></i>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl font-bold mb-3 text-red-500">Falha na Exclusão</h1>
+
+        <p class="text-gray-300 mb-6 text-lg leading-relaxed">
+            A peça **{{ peca.nome }}** não pode ser excluída.
+        </p>
+
+        <div class="bg-red-900/40 border border-red-700/70 p-5 rounded-xl mb-8 text-left">
+            <h2 class="text-xl font-bold text-red-200 mb-3 flex items-center">
+                <i class="fas fa-lock mr-3"></i> Motivo da Proteção:
+            </h2>
+            <p class="text-red-100 mb-4">
+                Esta peça está sendo utilizada em outros registros do sistema (relacionamentos protegidos). Para excluí-la, você deve primeiro remover ou alterar as seguintes referências:
+            </p>
+
+            <!-- Lista de Objetos Protegidos -->
+            <ul class="list-disc list-inside space-y-1 text-red-100 pl-4">
+                {% for obj in protected_objects %}
+                    <li class="bg-red-800/50 p-1 rounded text-sm break-words">{{ obj }}</li>
+                {% empty %}
+                    <li class="text-red-100">Nenhuma referência detalhada fornecida, mas o objeto está protegido.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="flex justify-center mt-8">
+            <a href="{% url 'listar_pecas' %}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-[1.03] shadow-lg shadow-blue-900/50">
+                <i class="fas fa-arrow-left mr-2"></i> Voltar para a Lista de Peças
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

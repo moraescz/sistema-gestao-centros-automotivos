@@ -1,0 +1,64 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen p-4 sm:p-8 text-white">
+    
+    <div class="max-w-md w-full text-center bg-gray-900/95 p-8 sm:p-12 rounded-2xl shadow-3xl shadow-black/70 border border-gray-800">
+        
+        <div class="text-7xl text-red-500 mb-6 drop-shadow-lg">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl font-bold mb-3 text-red-400">Atenção!</h1>
+
+        <p class="text-gray-300 mb-6 text-lg leading-relaxed">
+            Você tem certeza que deseja excluir permanentemente
+            {% if tipo %}o {{ tipo|lower }}{% else %}o item{% endif %}:
+            <br>
+            <strong class="font-extrabold text-xl text-white block mt-2 p-1 bg-gray-800 rounded-lg">
+                {% if obj %}
+                    {% if obj.nome %}{{ obj.nome }}{% elif obj.modelo %}{{ obj.modelo }}{% else %}{{ obj }}{% endif %}
+                {% elif object %}
+                    {% if object.nome %}{{ object.nome }}{% elif object.modelo %}{{ object.modelo }}{% elif object.get_full_name %}{{ object.get_full_name }}{% else %}{{ object }}{% endif %}
+                {% elif cliente %}
+                    {{ cliente.nome }}
+                {% elif veiculo %}
+                    {{ veiculo.modelo }}
+                {% elif peca %}
+                    {{ peca.nome }}
+                {% endif %}
+            </strong>
+        </p>
+
+        <div class="bg-red-900/30 border border-red-700/50 p-3 rounded-lg mb-8">
+            <p class="text-sm text-red-300 font-medium">
+                <i class="fas fa-history mr-2"></i> Esta ação é irreversível e não pode ser desfeita.
+            </p>
+        </div>
+
+        <form method="post" action="
+            {% if tipo == 'Cliente' %}{% url 'excluir_cliente' obj.pk %}
+            {% elif tipo == 'Veículo' %}{% url 'excluir_veiculo' obj.pk %}
+            {% elif tipo == 'Peça' %}{% url 'excluir_peca' object.pk %}
+            {% elif tipo == 'Ordem de Serviço' %}{% url 'excluir_ordem_servico' obj.pk %}
+            {% elif tipo == 'Peça da Ordem de Serviço' %}{% url 'remover_peca_da_os' obj.pk %}
+            {% elif tipo == 'Serviço da Ordem de Serviço' %}{% url 'remover_servico_da_os' obj.pk %}
+            {% elif tipo == 'Anexo da Ordem de Serviço' %}{% url 'remover_anexo_da_os' obj.pk %}
+            {% endif %}">
+            {% csrf_token %}
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                
+                <a href="javascript:history.back()" class="w-full sm:w-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-8 rounded-xl transition-all transform hover:scale-[1.03] shadow-md">
+                    <i class="fas fa-ban mr-2"></i> Cancelar
+                </a>
+
+                <button type="submit" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-[1.03] shadow-lg shadow-red-900/50">
+                    <i class="fas fa-trash-alt mr-2"></i> Excluir
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'cadastros/base.html' %}
+{% load static %}
+{% load custom_filters %} {# Assumindo que o |default ainda vem daqui, se não, pode remover %}
+
+{% block content %}
+<style>
+    /* Animação para o ícone pulsar (ação positiva) */
+    @keyframes pulse-icon {
+        0%, 100% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.1); opacity: 1; }
+    }
+    .animate-pulse-icon {
+        animation: pulse-icon 2.5s ease-in-out infinite;
+    }
+</style>
+
+{# Centraliza a caixa na área de conteúdo visível #}
+<div class="flex items-center justify-center min-h-[calc(100vh-10rem)] p-8 text-white">
+    <div class="max-w-md w-full text-center bg-black bg-opacity-70 p-8 sm:p-12 rounded-2xl shadow-2xl border border-green-500/50">
+        
+        <div class="text-7xl text-green-400 mb-4 inline-block animate-pulse-icon">
+            <i class="fas fa-user-check"></i>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl font-bold mb-2">Confirmar Reativação</h1>
+
+        <p class="text-gray-300 mb-6">
+            Tem a certeza que deseja reativar o funcionário <br>
+            <strong class="font-semibold text-lg text-green-300">"{{ funcionario.get_full_name|default:funcionario.username }}"</strong>?
+        </p>
+        <p class="text-sm text-blue-300 mb-8">
+            O funcionário voltará a ter acesso ao sistema.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                
+                <!-- 
+                  MELHORIA DE UX: 
+                  Usar um link direto para a lista de funcionários é mais fiável
+                  do que 'javascript:history.back()'.
+                  Altere 'listar_funcionarios' se o nome da sua URL for diferente.
+                -->
+                <a href="{% url 'listar_funcionarios' %}" 
+                   class="flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-gray-600/40">
+                   <i class="fas fa-times fa-fw"></i>
+                   Cancelar
+                </a>
+
+                <button type="submit" 
+                        class="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-green-600/30 hover:shadow-green-500/40">
+                    <i class="fas fa-check fa-fw"></i>
+                    Confirmar Reativação
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
