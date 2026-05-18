@@ -62,6 +62,7 @@ https://github.com/user-attachments/assets/d585a82a-d046-49b4-957e-dfe524e1ba18
 
 ### Dashboard
 https://github.com/user-attachments/assets/b502d97d-e157-4b88-8db5-bda1b0d72762
+
 https://github.com/user-attachments/assets/68215bc5-3d0d-498e-aae5-c3b040605dc5
 
 ### Gestão de Clientes
