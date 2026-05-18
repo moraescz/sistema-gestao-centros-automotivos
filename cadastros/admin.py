@@ -2,7 +2,10 @@ from django.contrib import admin
 from .models import (
     Cliente, Veiculo, Peca, OrdemServico, ItemOrdemServico,
     PecaUtilizada, ServicoUtilizado, AnexoOrdemServico,
-    ConfiguracoesGerais, LogAtividade
+    ConfiguracoesGerais, LogAtividade,
+    # Novos modelos
+    Servico, Agendamento, HorarioFuncionamento, DiaBloqueado,
+    ConfiguracaoSite, FotoTrabalho
 )
 
 
@@ -75,3 +78,52 @@ class ConfiguracoesGeraisAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Impede a exclusão do objeto Singleton.
         return False
+
+
+# ==================== NOVOS MODELOS PARA AGENDAMENTO ====================
+
+@admin.register(Servico)
+class ServicoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'preco', 'duracao_minutos', 'ativo', 'ordem')
+    list_filter = ('ativo',)
+    search_fields = ('nome',)
+
+
+@admin.register(Agendamento)
+class AgendamentoAdmin(admin.ModelAdmin):
+    list_display = ('cliente_nome', 'servico', 'data', 'horario', 'status')
+    list_filter = ('status', 'data', 'servico')
+    search_fields = ('cliente_nome', 'cliente_telefone')
+    readonly_fields = ('criado_em', 'atualizado_em')
+
+
+@admin.register(HorarioFuncionamento)
+class HorarioFuncionamentoAdmin(admin.ModelAdmin):
+    list_display = ('dia_semana', 'hora_inicio', 'hora_fim', 'intervalo_minutos', 'ativo')
+    list_filter = ('ativo',)
+
+
+@admin.register(DiaBloqueado)
+class DiaBloqueadoAdmin(admin.ModelAdmin):
+    list_display = ('data', 'motivo')
+    search_fields = ('motivo',)
+
+
+@admin.register(ConfiguracaoSite)
+class ConfiguracaoSiteAdmin(admin.ModelAdmin):
+    """
+    Configuração para o site público.
+    """
+    list_display = ('nome_empresa', 'telefone_whatsapp')
+    
+    def has_add_permission(self, request):
+        return not ConfiguracaoSite.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(FotoTrabalho)
+class FotoTrabalhoAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'data_upload')
+    search_fields = ('titulo', 'descricao')

@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ configuracao.nome_empresa|default:"Centro Estética Automotiva" }} - Agendamento Online</title>
+    <meta name="description" content="Agende seu serviço de estética automotiva. Lavagem, polimento, proteção e mais.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% if configuracao.logo %}{{ configuracao.logo.url }}{% else %}{% static 'images/logo.png' %}{% endif %}">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Override CSS variables from theme if needed */
+        :root {
+            --cor-primaria: {{ configuracao.cor_primaria|default:'#00BFFF' }};
+            --cor-fundo: {{ configuracao.cor_fundo|default:'#000000' }};
+            --cor-contraste: {{ configuracao.cor_contraste|default:'#FFFFFF' }};
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-car-side logo-icon"></i>
+                <span>{{ configuracao.nome_empresa|default:"Centro Estética" }}</span>
+            </div>
+            
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="{% url 'site_home' %}" class="{% if request.resolver_match.url_name == 'site_home' %}active{% endif %}">Início</a></li>
+                    <li><a href="{% url 'site_servicos' %}" class="{% if request.resolver_match.url_name == 'site_servicos' %}active{% endif %}">Serviços</a></li>
+                    <li><a href="{% url 'site_agendar' %}" class="btn btn-primary">Agendar Agora</a></li>
+                </ul>
+            </nav>
+            
+            <!-- Mobile Menu Button -->
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>{{ configuracao.nome_empresa|default:"Centro Estética" }}</h4>
+                    <p>Serviços especializados em estética automotiva. Seu carro merece o melhor.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contato</h4>
+                    <ul>
+                        {% if configuracao.telefone_whatsapp %}
+                        <li>
+                            <a href="https://wa.me/55{{ configuracao.telefone_whatsapp|safe }}" target="_blank">
+                                <i class="fab fa-whatsapp"></i> {{ configuracao.telefone_whatsapp }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if configuracao.endereco %}
+                        <li><i class="fas fa-map-marker-alt"></i> {{ configuracao.endereco }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Horário de Funcionamento</h4>
+                    <ul>
+                        <li>Seg - Sex: 08:00 - 18:00</li>
+                        <li>Sáb: 08:00 - 17:00</li>
+                        <li>Dom: Fechado</li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Redes Sociais</h4>
+                    <div class="social-links">
+                        {% if configuracao.instagram %}
+                        <a href="https://instagram.com/{{ configuracao.instagram }}" target="_blank">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        {% endif %}
+                        {% if configuracao.facebook %}
+                        <a href="https://facebook.com/{{ configuracao.facebook }}" target="_blank">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; {% now "Y" %} {{ configuracao.nome_empresa|default:"Centro Estética" }}. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{% static 'js/agendamento.js' %}"></script>
+    
+    <script>
+        function toggleMobileMenu() {
+            const nav = document.querySelector('.nav-links');
+            nav.classList.toggle('active');
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

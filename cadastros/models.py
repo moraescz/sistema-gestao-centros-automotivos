@@ -414,3 +414,176 @@ class Funcionario(models.Model):
         verbose_name = "Funcionário"
         verbose_name_plural = "Funcionários"
         default_permissions = ('view', 'add', 'change', 'delete')
+
+
+# ==================== NOVOS MODELOS PARA AGENDAMENTO ====================
+
+class Servico(models.Model):
+    """Serviços oferecidos pelo centro de estética automotiva"""
+    nome = models.CharField(max_length=100, verbose_name="Nome do Serviço")
+    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
+    preco = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Preço (R$)")
+    duracao_minutos = models.PositiveIntegerField(verbose_name="Duração (minutos)")
+    imagem = models.ImageField(upload_to='servicos/', blank=True, null=True, verbose_name="Imagem")
+    ativo = models.BooleanField(default=True, verbose_name="Ativo")
+    ordem = models.PositiveIntegerField(default=0, verbose_name="Ordem de exibição")
+    
+    def __str__(self):
+        return f"{self.nome} - R$ {self.preco}"
+
+    class Meta:
+        verbose_name = "Serviço"
+        verbose_name_plural = "Serviços"
+        ordering = ['ordem', 'nome']
+
+
+class Agendamento(models.Model):
+    """Agendamento de serviços"""
+    STATUS_CHOICES = [
+        ('AGENDADO', 'Agendado'),
+        ('CONFIRMADO', 'Confirmado'),
+        ('EM_ANDAMENTO', 'Em Andamento'),
+        ('FINALIZADO', 'Finalizado'),
+        ('CANCELADO', 'Cancelado'),
+    ]
+    
+    servico = models.ForeignKey(Servico, on_delete=models.CASCADE, related_name='agendamentos', verbose_name="Serviço")
+    cliente_nome = models.CharField(max_length=100, verbose_name="Nome do Cliente")
+    cliente_telefone = models.CharField(max_length=16, verbose_name="Telefone (WhatsApp)")
+    cliente_email = models.EmailField(blank=True, null=True, verbose_name="E-mail")
+    data = models.DateField(verbose_name="Data")
+    horario = models.TimeField(verbose_name="Horário")
+    obs = models.TextField(blank=True, null=True, verbose_name="Observações")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='AGENDADO', verbose_name="Status")
+    
+    # Avaliação
+    nota_avaliacao = models.PositiveIntegerField(blank=True, null=True, verbose_name="Nota (1-5)")
+    comentario_avaliacao = models.TextField(blank=True, null=True, verbose_name="Comentário da Avaliação")
+    
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name="Criado em")
+    atualizado_em = models.DateTimeField(auto_now=True, verbose_name="Atualizado em")
+    
+    @property
+    def duracao(self):
+        return self.servico.duracao_minutos
+    
+    def __str__(self):
+        return f"{self.cliente_nome} - {self.servico.nome} ({self.data} às {self.horario})"
+
+    class Meta:
+        verbose_name = "Agendamento"
+        verbose_name_plural = "Agendamentos"
+        ordering = ['data', 'horario']
+
+
+class HorarioFuncionamento(models.Model):
+    """Horário de funcionamento semanal"""
+    DIAS_SEMANA = [
+        (0, 'Segunda-feira'),
+        (1, 'Terça-feira'),
+        (2, 'Quarta-feira'),
+        (3, 'Quinta-feira'),
+        (4, 'Sexta-feira'),
+        (5, 'Sábado'),
+        (6, 'Domingo'),
+    ]
+    
+    dia_semana = models.IntegerField(choices=DIAS_SEMANA, unique=True, verbose_name="Dia da Semana")
+    hora_inicio = models.TimeField(verbose_name="Hora de Início")
+    hora_fim = models.TimeField(verbose_name="Hora de Fim")
+    intervalo_minutos = models.PositiveIntegerField(default=30, verbose_name="Intervalo entre atendimentos")
+    ativo = models.BooleanField(default=True, verbose_name="Ativo")
+    
+    def __str__(self):
+        return f"{self.get_dia_semana_display()}: {self.hora_inicio} às {self.hora_fim}"
+    
+    @property
+    def horarios_disponiveis(self):
+        """Retorna lista de horários disponíveis"""
+        from datetime import timedelta
+        import datetime
+        
+        horarios = []
+        atual = datetime.datetime.combine(datetime.date.today(), self.hora_inicio)
+        fim = datetime.datetime.combine(datetime.date.today(), self.hora_fim)
+        
+        while atual < fim:
+            horarios.append(atual.time())
+            atual += timedelta(minutes=self.intervalo_minutos)
+        
+        return horarios
+
+    class Meta:
+        verbose_name = "Horário de Funcionamento"
+        verbose_name_plural = "Horários de Funcionamento"
+        ordering = ['dia_semana']
+
+
+class DiaBloqueado(models.Model):
+    """Dias bloqueados (feriados, férias, etc.)"""
+    data = models.DateField(unique=True, verbose_name="Data Bloqueada")
+    motivo = models.CharField(max_length=200, blank=True, null=True, verbose_name="Motivo")
+    
+    def __str__(self):
+        return f"{self.data} - {self.motivo or 'Bloqueado'}"
+
+    class Meta:
+        verbose_name = "Dia Bloqueado"
+        verbose_name_plural = "Dias Bloqueados"
+
+
+class ConfiguracaoSite(models.Model):
+    """Configurações do site público"""
+    nome_empresa = models.CharField(max_length=100, default="Centro Estética Automotiva")
+    telefone_whatsapp = models.CharField(max_length=16, help_text="Telefone com DDD para WhatsApp")
+    logo = models.ImageField(upload_to='configuracoes/', blank=True, null=True, verbose_name="Logo")
+    imagem_fundo = models.ImageField(upload_to='configuracoes/', blank=True, null=True, verbose_name="Imagem de Fundo")
+    
+    # Cores do tema
+    cor_fundo = models.CharField(max_length=7, default='#000000', verbose_name="Cor de Fundo")
+    cor_primaria = models.CharField(max_length=7, default='#00BFFF', verbose_name="Cor Primária (Azul Água)")
+    cor_contraste = models.CharField(max_length=7, default='#FFFFFF', verbose_name="Cor de Contraste")
+    
+    # Mensagem automática do WhatsApp
+    mensagem_whatsapp = models.TextField(
+        default="Quero agendar {servico} para {data} às {horario}",
+        verbose_name="Mensagem do WhatsApp",
+        help_text="Use {servico}, {data}, {horario}, {nome} como variáveis"
+    )
+    
+    # Informações adicionais
+    endereco = models.TextField(blank=True, null=True, verbose_name="Endereço")
+    instagram = models.CharField(max_length=100, blank=True, null=True, verbose_name="Instagram")
+    facebook = models.CharField(max_length=100, blank=True, null=True, verbose_name="Facebook")
+    
+    def __str__(self):
+        return self.nome_empresa
+    
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super(ConfiguracaoSite, self).save(*args, **kwargs)
+    
+    @classmethod
+    def carregar(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    class Meta:
+        verbose_name = "Configuração do Site"
+        verbose_name_plural = "Configurações do Site"
+
+
+class FotoTrabalho(models.Model):
+    """Fotos de trabalhos realizados"""
+    imagem = models.ImageField(upload_to='fotos_trabalho/', verbose_name="Imagem")
+    titulo = models.CharField(max_length=100, blank=True, null=True, verbose_name="Título")
+    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
+    data_upload = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.titulo or f"Foto #{self.pk}"
+
+    class Meta:
+        verbose_name = "Foto do Trabalho"
+        verbose_name_plural = "Fotos dos Trabalhos"
+        ordering = ['-data_upload']

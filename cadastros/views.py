@@ -18,6 +18,7 @@ from django.db.models import Q, ProtectedError
 from django.core.paginator import Paginator
 from django.contrib.contenttypes.models import ContentType
 from .models import Cliente, Veiculo, Peca, OrdemServico, PecaUtilizada, ConfiguracoesGerais, LogAtividade, ServicoUtilizado, AnexoOrdemServico, Funcionario
+from .models import Servico, Agendamento, HorarioFuncionamento, DiaBloqueado, ConfiguracaoSite, FotoTrabalho
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -1982,3 +1983,248 @@ def roteador_inicial(request):
     # Nesse caso, enviamos para uma página de "Sem Permissões" ou Acesso Negado.
     # Você pode criar uma view simples que diz "Bem-vindo, aguarde liberação do admin".
     return render(request, 'cadastros/acesso_negado.html')
+
+
+# ==================== NOVAS VIEWS DO SITE PÚBLICO ====================
+
+def site_home(request):
+    """Página inicial pública do site"""
+    configuracao = ConfiguracaoSite.carregar()
+    servicos = Servico.objects.filter(ativo=True).order_by('ordem', 'nome')
+    fotos = FotoTrabalho.objects.all()[:6]  # Últimas 6 fotos
+    
+    context = {
+        'configuracao': configuracao,
+        'servicos': servicos,
+        'fotos': fotos,
+    }
+    return render(request, 'site/home.html', context)
+
+
+def site_servicos(request):
+    """Página de listagem de serviços"""
+    configuracao = ConfiguracaoSite.carregar()
+    servicos = Servico.objects.filter(ativo=True).order_by('ordem', 'nome')
+    
+    context = {
+        'configuracao': configuracao,
+        'servicos': servicos,
+    }
+    return render(request, 'site/servicos.html', context)
+
+
+def site_agendar(request):
+    """Página de agendamento"""
+    configuracao = ConfiguracaoSite.carregar()
+    servicos = Servico.objects.filter(ativo=True).order_by('ordem', 'nome')
+    
+    # Obtém horários de funcionamento
+    horarios = HorarioFuncionamento.objects.filter(ativo=True).order_by('dia_semana')
+    
+    # Obtém dias bloqueados
+    from datetime import date
+    dias_bloqueados = DiaBloqueado.objects.values_list('data', flat=True)
+    
+    context = {
+        'configuracao': configuracao,
+        'servicos': servicos,
+        'horarios': horarios,
+        'dias_bloqueados': list(dias_bloqueados),
+    }
+    return render(request, 'site/agendar.html', context)
+
+
+def site_sucesso(request):
+    """Página de sucesso após agendamento"""
+    configuracao = ConfiguracaoSite.carregar()
+    
+    context = {
+        'configuracao': configuracao,
+    }
+    return render(request, 'site/sucesso.html', context)
+
+
+# ==================== VIEWS DO PAINEL ADMIN (AGENDAMENTO) ====================
+
+def admin_dashboard(request):
+    """Dashboard do admin/painel do dono"""
+    from datetime import date, timedelta
+    
+    today = date.today()
+    
+    # Agendamentos de hoje
+    agendamentos_hoje = Agendamento.objects.filter(data=today).order_by('horario')
+    
+    # Total de agendamentos do dia
+    total_hoje = agendamentos_hoje.count()
+    
+    # Agendamentos confirmados
+    confirmados_hoje = agendamentos_hoje.filter(status='CONFIRMADO').count()
+    
+    # Receita do dia (soma dos serviços realizados)
+    receita_hoje = 0
+    for ag in agendamentos_hoje.filter(status='FINALIZADO'):
+        receita_hoje += float(ag.servico.preco)
+    
+    # Próximos agendamentos (próximos 7 dias)
+    proximos = Agendamento.objects.filter(
+        data__gte=today,
+        data__lte=today + timedelta(days=7)
+    ).order_by('data', 'horario')[:10]
+    
+    # Estatísticas da semana
+    semana_passada = today - timedelta(days=7)
+    agendamentos_semana = Agendamento.objects.filter(data__gte=semana_passada).count()
+    
+    # Média de avaliações
+    avaliacoes = Agendamento.objects.filter(nota_avaliacao__isnull=False)
+    nota_media = 0
+    if avaliacoes.exists():
+        nota_media = avaliacoes.aggregate(Avg('nota_avaliacao'))['nota_avaliacao__avg']
+    
+    context = {
+        'agendamentos_hoje': agendamentos_hoje,
+        'total_hoje': total_hoje,
+        'confirmados_hoje': confirmados_hoje,
+        'receita_hoje': receita_hoje,
+        'proximos': proximos,
+        'agendamentos_semana': agendamentos_semana,
+        'nota_media': nota_media,
+    }
+    return render(request, 'site/admin_dashboard.html', context)
+
+
+def admin_agendamentos(request):
+    """Lista de agendamentos para o admin"""
+    from datetime import date
+    from django.db.models import Q
+    
+    today = date.today()
+    
+    # Filtros
+    status_filter = request.GET.get('status', '')
+    data_filter = request.GET.get('data', '')
+    search = request.GET.get('q', '')
+    
+    agendamentos = Agendamento.objects.all().order_by('-data', '-horario')
+    
+    if status_filter:
+        agendamentos = agendamentos.filter(status=status_filter)
+    
+    if data_filter:
+        agendamentos = agendamentos.filter(data=data_filter)
+    
+    if search:
+        agendamentos = agendamentos.filter(
+            Q(cliente_nome__icontains=search) |
+            Q(cliente_telefone__icontains=search)
+        )
+    
+    # Paginação
+    paginator = Paginator(agendamentos, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+        'data_filter': data_filter,
+        'search': search,
+    }
+    return render(request, 'site/admin_agendamentos.html', context)
+
+
+def admin_alterar_status(request, pk, status):
+    """Altera o status de um agendamento"""
+    agendamento = get_object_or_404(Agendamento, pk=pk)
+    
+    if status in ['AGENDADO', 'CONFIRMADO', 'EM_ANDAMENTO', 'FINALIZADO', 'CANCELADO']:
+        agendamento.status = status
+        agendamento.save()
+        messages.success(request, f'Status do agendamento alterado para {agendamento.get_status_display()}')
+    
+    return redirect('admin_agendamentos')
+
+
+def admin_servicos(request):
+    """Gestão de serviços"""
+    servicos = Servico.objects.all().order_by('ordem', 'nome')
+    
+    context = {
+        'servicos': servicos,
+    }
+    return render(request, 'site/admin_servicos.html', context)
+
+
+def admin_horarios(request):
+    """Gestão de horários de funcionamento"""
+    horarios = HorarioFuncionamento.objects.all().order_by('dia_semana')
+    dias_bloqueados = DiaBloqueado.objects.all().order_by('data')
+    
+    context = {
+        'horarios': horarios,
+        'dias_bloqueados': dias_bloqueados,
+    }
+    return render(request, 'site/admin_horarios.html', context)
+
+
+def admin_relatorios(request):
+    """Relatórios"""
+    from datetime import date, timedelta
+    from django.db.models import Count, Sum
+    
+    hoje = date.today()
+    
+    # Período
+    periodo = request.GET.get('periodo', 'dia')
+    
+    if periodo == 'dia':
+        data_inicio = hoje
+        data_fim = hoje
+    elif periodo == 'semana':
+        data_inicio = hoje - timedelta(days=7)
+        data_fim = hoje
+    elif periodo == 'mes':
+        data_inicio = date(hoje.year, hoje.month, 1)
+        data_fim = hoje
+    else:
+        data_inicio = hoje
+        data_fim = hoje
+    
+    # Consulta agendamentos no período
+    agendamentos = Agendamento.objects.filter(
+        data__gte=data_inicio,
+        data__lte=data_fim
+    )
+    
+    total_agendamentos = agendamentos.count()
+    total_servicos = agendamentos.values('servico').annotate(count=Count('id'))
+    
+    # Receita
+    receita = 0
+    for ag in agendamentos.filter(status='FINALIZADO'):
+        receita += float(ag.servico.preco)
+    
+    # Avaliação média
+    avaliacoes = agendamentos.filter(nota_avaliacao__isnull=False)
+    nota_media = 0
+    if avaliacoes.exists():
+        nota_media = avaliacoes.aggregate(Avg('nota_avaliacao'))['nota_avaliacao__avg']
+    
+    # Serviços mais procurados
+    servicos_mais = list(
+        agendamentos.values('servico__nome')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:5]
+    )
+    
+    context = {
+        'periodo': periodo,
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'total_agendamentos': total_agendamentos,
+        'receita': receita,
+        'nota_media': nota_media,
+        'servicos_mais': servicos_mais,
+    }
+    return render(request, 'site/admin_relatorios.html', context)
