@@ -14,9 +14,13 @@ SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Em produção, mude para DEBUG = config('DEBUG', default=False, cast=bool)
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='127.0.0.1,localhost',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 
 # Application definition
@@ -125,7 +129,7 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Timeout para envio de e-mail (em segundos)
-EMAIL_TIMEOUT = 1
+EMAIL_TIMEOUT = 5
 
 AUTHENTICATION_BACKENDS = [
     'cadastros.backends.EmailOrUsernameBackend',  # Nosso backend
